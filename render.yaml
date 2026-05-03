@@ -1,0 +1,6 @@
+services:
+    - type: web
+    name: topupking-bank-3
+    env: php
+    buildCommand: composer install --no-dev --optimize-autoloader
+    startCommand: vendor/bin/heroku-php-apache2 public/
