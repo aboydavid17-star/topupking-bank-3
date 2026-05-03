@@ -3,8 +3,10 @@ FROM php:8.3-cli
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-    libzip-dev libpng-dev libonig-dev libxml2-dev libpq-dev
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath
+    libzip-dev libpng-dev libonig-dev libxml2-dev libpq-dev zip unzip git
+RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath zip
+    
+
     
 
     
