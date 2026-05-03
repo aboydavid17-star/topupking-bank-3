@@ -13,11 +13,5 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN a2enmod rewrite
 
-RUN echo '#!/bin/sh' > /start.sh && \
-    echo 'echo "=== RENDER STARTING ON PORT $PORT ==="' >> /start.sh && \
-    echo 'sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf' >> /start.sh && \
-    echo 'sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf' >> /start.sh && \
-    echo 'apache2-foreground' >> /start.sh && \
-    chmod +x /start.sh
-
-CMD /start.sh
+# This is the magic line - No more start.sh needed
+CMD sh -c 'echo "=== RENDER PORT IS $PORT ===" && sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf && sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf && exec apache2-foreground'
