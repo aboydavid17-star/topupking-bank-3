@@ -15,6 +15,4 @@ RUN a2enmod rewrite
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
-
-
-COPY ENTRYPOINT ["/start.sh"]
+ENTRYPOINT ["/start.sh"]
