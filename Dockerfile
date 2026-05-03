@@ -20,3 +20,5 @@ RUN a2enmod rewrite
 EXPOSE 10000
 RUN php artisan config:cache
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+CMD ["apache2-foreground"]
