@@ -30,4 +30,5 @@ RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /e
 # Enable .htaccess in /public directory
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
-CMD sh -c 'php artisan migrate --force || true && echo "=== RENDER PORT IS $PORT ===" && sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf && sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf && exec apache2-foreground'
+# Bind to Render $PORT + RUN MIGRATIONS WITHOUT CRASHING
+CMD sh -c 'php artisan migrate --force || echo "Migration failed but container continues..." && echo "=== RENDER PORT IS $PORT ===" && sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/
