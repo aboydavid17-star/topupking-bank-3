@@ -1,24 +1,18 @@
-FROM php:8.3-apache
-
-WORKDIR /var/www/html
+FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
-    libzip-dev libpng-dev libonig-dev libxml2-dev libpq-dev zip unzip git
-
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath zip
+    git curl libpng-dev libonig-dev libxml2-dev zip unzip \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY . .
+WORKDIR /var/www/html
+COPY . /var/www/html
 
 RUN composer install --no-dev --optimize-autoloader
-
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
 RUN a2enmod rewrite
 
-EXPOSE 10000
-RUN php artisan config:cache
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
-CMD ["apache2-foreground"]
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+CMD ["/start.sh"]
