@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -9,28 +9,29 @@ use App\Http\Controllers\DashboardController;
 |--------------------------------------------------------------------------
 */
 
-// Home page → redirect to login
+// Homepage
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('welcome');
 });
 
-// Login page
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
-
-// Register page  
+// Register Routes
 Route::get('/register', function () {
-    return view('auth.register');
+    return view('register');
 })->name('register');
 
-// Dashboard - only for logged in users
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth')
-    ->name('dashboard');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
+// Login Routes  
+Route::get('/login', function () {
+    return view('login');
+})->name('login');
+
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+
+// Dashboard - Only for logged in users
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware('auth')->name('dashboard');
 
 // Logout
-Route::post('/logout', function () {
-    auth()->logout();
-    return redirect()->route('login');
-})->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
