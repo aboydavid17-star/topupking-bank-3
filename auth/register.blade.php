@@ -1,18 +1,58 @@
 <!DOCTYPE html>
-<html>
-<head><title>Register - TopupKing</title></head>
-<body style="font-family: Arial; display: flex; justify-content: center; margin-top: 50px;">
-    <div style="width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
-        <h2>Register for TopupKing</h2>
-        <form method="POST" action="/register">
-            @csrf
-            <input type="text" name="name" placeholder="Name" required style="width: 100%; padding: 8px; margin: 5px 0;"><br>
-            <input type="email" name="email" placeholder="Email" required style="width: 100%; padding: 8px; margin: 5px 0;"><br>
-            <input type="password" name="password" placeholder="Password" required style="width: 100%; padding: 8px; margin: 5px 0;"><br>
-            <input type="password" name="password_confirmation" placeholder="Confirm Password" required style="width: 100%; padding: 8px; margin: 5px 0;"><br>
-            <button type="submit" style="width: 100%; padding: 10px; background: blue; color: white; border: none;">Register</button>
-        </form>
-        <p>Have account? <a href="/login">Login</a></p>
-    </div>
-</body>
-</html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TopupKing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #f0f2f5;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            width: 100%;
+            max-width: 400px; 
+        }
+        h2 { 
+            text-align: center; 
+            color: #1c1e21; 
+            margin-bottom: 25px; 
+        }
+        .form-control {
+            margin-bottom: 15px;
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #dddfe2; 
+            border-radius: 6px; 
+            font-size: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1877f2;
+        }
+        .btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: #42b72a;
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer; 
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: #36a
