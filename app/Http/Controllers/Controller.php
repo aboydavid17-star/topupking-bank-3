@@ -2,22 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller as BaseController;
 
-class DashboardController extends Controller
+abstract class Controller extends BaseController
 {
-    public function index()
-    {
-        $user = Auth::user();
-        
-        // Create wallet if e no exist
-        if (!$user->wallet) {
-            $user->wallet()->create(['balance' => 0]);
-        }
-        
-        $balance = $user->wallet->balance;
-        
-        return view('dashboard', ['balance' => $balance]);
-    }
+    use AuthorizesRequests, ValidatesRequests;
 }
