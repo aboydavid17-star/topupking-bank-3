@@ -1,11 +1,7 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AirtimeController;
-use App\Http\Controllers\DataController;
-use App\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,31 +9,28 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+// Home page → redirect to login
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-    // Wallet Funding
-    Route::get('/wallet/fund', [WalletController::class, 'showFundForm'])->name('wallet.fund');
-    Route::post('/wallet/fund', [WalletController::class, 'initializePayment'])->name('wallet.fund.init');
-    Route::get('/wallet/callback', [WalletController::class, 'handleCallback'])->name('wallet.callback');
-    
-    // Airtime
-    Route::get('/airtime', [AirtimeController::class, 'index'])->name('airtime.index');
-    Route::post('/airtime/buy', [AirtimeController::class, 'buy'])->name('airtime.buy');
-    
-    // Data
-    Route::get('/data', [DataController::class, 'index'])->name('data.index');
-    Route::post('/data/buy', [DataController::class, 'buy'])->name('data.buy');
-});
+// Login page
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
 
-// NO require auth.php LINE HERE - DELETE AM
+// Register page  
+Route::get('/register', function () {
+    return view('auth.register');
+})->name('register');
+
+// Dashboard - only for logged in users
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware('auth')
+    ->name('dashboard');
+
+// Logout
+Route::post('/logout', function () {
+    auth()->logout();
+    return redirect()->route('login');
+})->name('logout');
