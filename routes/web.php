@@ -1,4 +1,5 @@
 <?php
+// force rebuild v2
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
