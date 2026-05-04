@@ -1,27 +1,27 @@
 <?php
-// force rebuild v5
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
+// Guest routes - only for people NOT logged in
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']); // ✅ NOTE: register not regist
+
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+});
+
+// Auth routes - only for logged in users
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
+    
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+// Home
 Route::get('/', function () {
     return view('welcome');
 });
-
-Route::get('/register', function () {
-    return view('register');
-})->name('register');
-
-Route::post('/register', [AuthController::class, 'register'])->name('register.post');
-
-Route::get('/login', function () {
-    return view('login');
-})->name('login');
-
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware('auth')->name('dashboard');
-
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
