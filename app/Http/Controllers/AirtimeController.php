@@ -25,8 +25,9 @@ class AirtimeController extends Controller
         $user = Auth::user();
         
         // ===== PUT YOUR CLUBKONNECT DETAILS HERE =====
-        $userid = 'YOUR_CLUBKONNECT_USERID'; 
-        $apikey = 'YOUR_CLUBKONNECT_API_KEY';
+        $userid = CK101277966
+$apikey = NXQ0YU65L0498M0PZ6V3D8URV46EAIW3555576G1PHT1B6S5KVA15N8635ITB5P6
+        
         // =============================================
 
         $network = $request->network;
