@@ -20,3 +20,11 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
+Route::get('/create-admin-12345', function() {
+    $user = \App\Models\User::create([
+        'name' => 'Admin',
+        'email' => 'admin@topupking.com',
+        'password' => bcrypt('password123')
+    ]);
+    return 'Admin created! Email: admin@topupking.com | Password: password123 | Now DELETE this route!';
+});
