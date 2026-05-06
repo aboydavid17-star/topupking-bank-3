@@ -27,9 +27,9 @@
         <p>Email: {{ Auth::user()->email }}</p>
         
         <h4>Wallet Balance</h4>
-        <div class="balance">₦{{ number_format(Auth::user()->balance, 2) }}</div>
+        <div class="balance">₦{{ number_format(Auth::user()->wallet ?? 0, 2) }}</div>
         
-        <a href="/fund-wallet" class="btn btn-green">Fund Wallet</a>
+        <a href="{{ route('fund-wallet') }}" class="btn btn-green">Fund Wallet</a>
         <a href="/airtime" class="btn">Buy Airtime</a>
         <a href="/data" class="btn">Buy Data</a>
     </div>
