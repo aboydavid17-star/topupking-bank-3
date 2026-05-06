@@ -16,4 +16,3 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/payment/callback', [PaymentController::class, 'callback'])->name('payment.callback');
 });
 
-require __DIR__.'/auth.php';
