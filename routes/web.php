@@ -1,18 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 
-// Your existing routes...
+// Auth Routes
+Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('login', [LoginController::class, 'login']);
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('register', [RegisterController::class, 'register']);
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
-
-    // FUND WALLET ROUTES
-    Route::get('/fund-wallet', [PaymentController::class, 'showFundForm'])->name('fund.wallet');
-    Route::post('/fund-wallet', [PaymentController::class, 'initialize'])->name('fund.wallet.post');
-    Route::get('/payment/callback', [PaymentController::class, 'callback'])->name('payment.callback');
+// Your other routes...
+Route::get('/', function () {
+    return view('welcome');
 });
-
+// etc...
