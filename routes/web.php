@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
@@ -23,7 +24,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')
     ->name('dashboard');
 
-// Fund Wallet Routes - THIS FIXES YOUR 404 👇
+// Fund Wallet Routes
 Route::get('/fund-wallet', [WalletController::class, 'showFundForm'])
     ->middleware('auth')
     ->name('fund-wallet');
@@ -32,6 +33,18 @@ Route::post('/fund-wallet', [WalletController::class, 'initializePayment'])
     ->middleware('auth')
     ->name('fund-wallet.pay');
 
-Route::get('/fund-wallet/callback', [WalletController::class, 'handleCallback'])
+Route::get('/payment/callback', [WalletController::class, 'handleCallback'])
     ->middleware('auth')
-    ->name('fund-wallet.callback');
+    ->name('payment.callback');
+
+// TEMP ROUTE TO CLEAR CACHE - DELETE AFTER USE
+Route::get('/clear-cache', function() {
+    Artisan::call('route:clear');
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('view:clear');
+    return 'Cache cleared successfully! ✅ <br><br> 
+            1. Now test Fund Wallet <br> 
+            2. Then DELETE this route from web.php for security <br><br>
+            <a href="/dashboard" style="color:blue;">← Go to Dashboard</a>';
+});
