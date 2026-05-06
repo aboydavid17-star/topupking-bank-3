@@ -2,15 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
-use App\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\WalletController;
+use App\Models\User;
+use Illuminate\Http\Request;
 
-// Public routes
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Clear cache route
 Route::get('/clear-cache', function() {
     Artisan::call('cache:clear');
     Artisan::call('config:clear');
@@ -19,29 +20,59 @@ Route::get('/clear-cache', function() {
     return "Cache cleared successfully";
 });
 
-// Login routes - basic version if you don't have Breeze
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// AUTH ROUTES - NO BREEZE NEEDED
+Route::middleware('guest')->group(function () {
+    Route::get('/login', function () {
+        return view('auth.login');
+    })->name('login');
 
-Route::post('/login', function () {
-    // Basic login logic
-    $credentials = request()->only('email', 'password');
-    if (Auth::attempt($credentials)) {
-        request()->session()->regenerate();
-        return redirect()->intended('dashboard');
-    }
-    return back()->withErrors(['email' => 'Invalid credentials']);
+    Route::post('/login', function (Request $request) {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->intended('dashboard');
+        }
+
+        return back()->withErrors([
+            'email' => 'Invalid credentials.',
+        ]);
+    });
+
+    Route::get('/register', function () {
+        return view('auth.register');
+    })->name('register');
+
+    Route::post('/register', function (Request $request) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'wallet' => 0,
+        ]);
+
+        Auth::login($user);
+        return redirect('/dashboard');
+    });
 });
 
-Route::post('/logout', function () {
+Route::post('/logout', function (Request $request) {
     Auth::logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
     return redirect('/');
-})->name('logout');
+})->name('logout')->middleware('auth');
 
-// Protected routes
+// PROTECTED ROUTES
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
