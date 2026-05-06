@@ -48,3 +48,32 @@ Route::get('/clear-cache', function() {
             2. Then DELETE this route from web.php for security <br><br>
             <a href="/dashboard" style="color:blue;">← Go to Dashboard</a>';
 });
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\WalletController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+// Your existing routes stay here...
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+// Add these 3 routes for Wallet Funding
+Route::middleware(['auth'])->group(function () {
+    Route::get('/fund-wallet', [WalletController::class, 'showFundForm'])->name('fund.wallet');
+    Route::post('/fund-wallet', [WalletController::class, 'initializePayment'])->name('fund.wallet.post');
+    Route::get('/payment/callback', [WalletController::class, 'paymentCallback'])->name('payment.callback');
+});
+
+require __DIR__.'/auth.php';
