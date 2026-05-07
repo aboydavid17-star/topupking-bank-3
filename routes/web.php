@@ -1,74 +1,43 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\WalletController;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+// Homepage redirects to login
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
-// LOGIN ROUTES - THIS FIXES YOUR 500 ERROR
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// GUEST ROUTES - only if not logged in
+Route::middleware('guest')->group(function () {
+    // Register
+    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [RegisterController::class, 'register']);
 
-Route::post('/login', function (Request $request) {
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
-
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect()->intended('/dashboard');
-    }
-
-    return back()->withErrors([
-        'email' => 'The provided credentials do not match our records.',
-    ]);
+    // Login
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
 });
 
-// REGISTER ROUTES
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
-
-Route::post('/register', function (Request $request) {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users',
-        'password' => 'required|string|min:8|confirmed',
-    ]);
-
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'wallet' => 0,
-    ]);
-
-    Auth::login($user);
-    return redirect('/dashboard');
-});
-
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/');
-})->name('logout')->middleware('auth');
-
-// PROTECTED ROUTES
-Route::middleware(['auth'])->group(function () {
+// AUTH ROUTES - only if logged in
+Route::middleware('auth')->group(function () {
+    // Dashboard
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 
+    // Fund Wallet - FIXED: changed 'inde' to 'index'
     Route::get('/fund-wallet', [WalletController::class, 'index'])->name('fund-wallet');
-    Route::post('/fund-wallet', [WalletController::class, 'store']);
-    Route::get('/payment/callback', [WalletController::class, 'callback']);
+    Route::post('/fund-wallet', [WalletController::class, 'store'])->name('fund-wallet.store');
+
+    // Logout
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
