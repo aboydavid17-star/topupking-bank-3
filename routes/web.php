@@ -24,7 +24,4 @@ Route::middleware('auth')->group(function () {
     // THIS IS THE FIX - 'index'
     Route::get('/fund-wallet', [WalletController::class, 'index'])->name('fund-wallet');
    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');use App\Http\Controllers\WalletController;
-
-Route::get('/fund-wallet', [WalletController::class, 'index'])->name('fund-wallet.index');
-Route::post('/fund-wallet', [WalletController::class, 'store'])->name('fund-wallet.store');
 });
