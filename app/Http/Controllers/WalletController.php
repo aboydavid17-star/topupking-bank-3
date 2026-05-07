@@ -16,8 +16,7 @@ class WalletController extends Controller
         $user = Auth::user();
         
         // Replace this with your actual wallet logic
-        $balance = $user->wallet_balance ?? 0;
-        $transactions = $user->transactions()->latest()->take(10)->get();
+        $balance = $user->wallet_balance ?? 0
 
         return view('wallet.index', [
             'balance' => $balance,
