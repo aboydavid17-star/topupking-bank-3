@@ -1,64 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet - TopupKing</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            padding: 20px;
-        }
-        .container { max-width: 600px; margin: 40px auto; }
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
-        .welcome { color: #666; margin-bottom: 30px; }
-        .balance-box {
-            background: linear-gradient(135deg, #0A9A4A 0%, #08832f 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
-        .balance-label { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
-        .balance-amount { font-size: 36px; font-weight: bold; }
-        .btn {
-            display: inline-block;
-            padding: 14px 30px;
-            background: #0A9A4A;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            text-align: center;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-        }
-        .btn:hover { background: #08832f; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="card">
-            <h1>My Wallet 💰</h1>
-            <p class="welcome">Welcome back, {{ $user->name }}</p>
+@extends('layouts.app')
 
-            <div class="balance-box">
-                <div class="balance-label">Available Balance</div>
-                <div class="balance-amount">₦{{ number_format($balance, 2) }}</div>
+@section('content')
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">{{ __('My Wallet') }}</div>
+
+                <div class="card-body">
+                    {{-- Success Message --}}
+                    @if(session('success'))
+                        <div style="background:#d4edda; color:#155724; padding:12px; border-radius:8px; margin-bottom:20px; border:1px solid #c3e6cb;">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    {{-- Error Message --}}
+                    @if(session('error'))
+                        <div style="background:#f8d7da; color:#721c24; padding:12px; border-radius:8px; margin-bottom:20px; border:1px solid #f5c6cb;">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    {{-- Wallet Balance --}}
+                    <div style="text-align:center; margin-bottom:30px;">
+                        <p style="font-size:14px; color:#666; margin-bottom:5px;">Wallet Balance</p>
+                        <h1 style="font-size:48px; font-weight:700; color:#10B981; margin:0;">
+                            ₦{{ number_format($balance, 2) }}
+                        </h1>
+                    </div>
+
+                    {{-- Fund Wallet Button --}}
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <a href="{{ route('wallet.create') }}" 
+                           style="background:#10B981; color:white; padding:12px 30px; border-radius:8px; text-decoration:none; display:inline-block; font-weight:600;">
+                            Fund Wallet
+                        </a>
+                    </div>
+
+                    {{-- Quick Info --}}
+                    <div style="background:#f9f9f9; padding:15px; border-radius:8px; font-size:14px; color:#555;">
+                        <p style="margin:5px 0;"><strong>Account Name:</strong> {{ $user->name }}</p>
+                        <p style="margin:5px 0;"><strong>Email:</strong> {{ $user->email }}</p>
+                        <p style="margin:5px 0;"><strong>Minimum Funding:</strong> ₦100</p>
+                    </div>
+
+                </div>
             </div>
-
-            <a href="#" class="btn">Fund Wallet</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+@endsection
