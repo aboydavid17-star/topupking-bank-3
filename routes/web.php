@@ -7,17 +7,32 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\WalletController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
 Route::get('/', function () {
     return view('welcome');
 });
 
-// AUTH ROUTES
+// LOGIN ROUTES - THIS FIXES YOUR 500 ERROR
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
+Route::post('/login', function (Request $request) {
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        return redirect()->intended('/dashboard');
+    }
+
+    return back()->withErrors([
+        'email' => 'The provided credentials do not match our records.',
+    ]);
+});
+
+// REGISTER ROUTES
 Route::get('/register', function () {
     return view('auth.register');
 })->name('register');
@@ -47,7 +62,7 @@ Route::post('/logout', function (Request $request) {
     return redirect('/');
 })->name('logout')->middleware('auth');
 
-// PROTECTED ROUTES - THIS FIXES YOUR 500 ERROR
+// PROTECTED ROUTES
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
