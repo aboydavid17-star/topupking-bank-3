@@ -97,8 +97,3 @@ Route::get('/boss-run-migrate', function() {
         return "<h1>ERROR:</h1><pre>" . $e->getMessage() . "</pre>";
     }
 });
-
-// YOUR NORMAL ROUTES BELOW
-Auth::routes();
-Route::get('/', function() { return redirect()->route('login'); });
-// ... rest of your routes
