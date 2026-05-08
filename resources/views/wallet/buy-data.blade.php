@@ -1,55 +1,97 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Buy Data - TopupKing</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial; background: #f0f2f5; margin: 0; padding: 20px; }
-       .container { max-width: 500px; margin: 0 auto; }
-       .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        label { font-weight: bold; color: #333; }
-       .btn { width: 100%; padding: 15px; background: #2196F3; color: white; border: none; border-radius: 8px; font-size: 16px; margin-top: 10px; cursor: pointer; }
-       .back { color: #667eea; text-decoration: none; display: inline-block; margin-bottom: 15px; }
-       .success { color: green; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-       .error { color: red; background: #ffebee; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <a href="{{ route('wallet') }}" class="back">← Back to Wallet</a>
-        <div class="card">
-            <h2>📱 Buy Data Bundle</h2>
-            @if(session('success'))<div class="success">{{ session('success') }}</div>@endif
-            @if(session('error'))<div class="error">{{ session('error') }}</div>@endif
+@extends('layouts.app')
 
-            <form method="POST" action="{{ route('buy.data') }}">
-                @csrf
-                <label>Network</label>
-                <select name="network" required>
-                    <option value="">Select Network</option>
-                    <option value="MTN">MTN</option>
-                    <option value="GLO">GLO</option>
-                    <option value="AIRTEL">Airtel</option>
-                    <option value="9MOBILE">9Mobile</option>
-                </select>
+@section('content')
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header" style="background: #5E3AEC; color: white; font-weight: 600;">
+                    <a href="{{ route('wallet') }}" style="color: white; text-decoration: none;">← Back</a>
+                    <span style="float: right;">Buy Data</span>
+                </div>
 
-                <label>Phone Number</label>
-                <input type="text" name="phone" placeholder="08012345678" required maxlength="11" pattern="[0-9]{11}">
+                <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
 
-                <label>Data Plan</label>
-                <select name="plan" required>
-                    <option value="">Select Plan</option>
-                    <option value="1GB - 30 Days - ₦300">1GB - 30 Days - ₦300</option>
-                    <option value="2GB - 30 Days - ₦600">2GB - 30 Days - ₦600</option>
-                    <option value="3GB - 30 Days - ₦1,000">3GB - 30 Days - ₦1,000</option>
-                    <option value="5GB - 30 Days - ₦1,500">5GB - 30 Days - ₦1,500</option>
-                    <option value="10GB - 30 Days - ₦3,000">10GB - 30 Days - ₦3,000</option>
-                </select>
+                    @if(session('error'))
+                        <div class="alert alert-danger">
+                            {{ session('error') }}
+                        </div>
+                    @endif
 
-                <button type="submit" class="btn">Buy Data Now</button>
-            </form>
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul style="margin: 0; padding-left: 20px;">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('wallet.buy-data.post') }}">
+                        @csrf
+
+                        <div class="form-group mb-3">
+                            <label for="network" style="font-weight: 600; margin-bottom: 5px;">Network Provider</label>
+                            <select name="network" id="network" class="form-control" required style="padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                                <option value="">Select Network</option>
+                                <option value="MTN">MTN</option>
+                                <option value="GLO">GLO</option>
+                                <option value="AIRTEL">AIRTEL</option>
+                                <option value="9MOBILE">9MOBILE</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="phone" style="font-weight: 600; margin-bottom: 5px;">Phone Number</label>
+                            <input type="text" name="phone" id="phone" class="form-control" placeholder="08012345678" maxlength="11" required style="padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="plan" style="font-weight: 600; margin-bottom: 5px;">Select Plan</label>
+                            <select name="plan" id="plan" class="form-control" required style="padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                                <option value="">Choose Plan</option>
+                                <option value="1GB - 30 Days - ₦300">1GB - 30 Days - ₦300</option>
+                                <option value="2GB - 30 Days - ₦600">2GB - 30 Days - ₦600</option>
+                                <option value="5GB - 30 Days - ₦1,500">5GB - 30 Days - ₦1,500</option>
+                                <option value="10GB - 30 Days - ₦3,000">10GB - 30 Days - ₦3,000</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100" style="background: #5E3AEC; border: none; padding: 14px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                            Buy Data Now
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+
+<style>
+.form-control:focus {
+    border-color: #5E3AEC;
+    box-shadow: 0 0 0 0.2rem rgba(94, 58, 236, 0.25);
+}
+.alert {
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+}
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+</style>
+@endsection
