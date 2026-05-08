@@ -34,18 +34,18 @@ class WalletController extends Controller
 
         $user = Auth::user();
 
-        // Extract amount and variation_code from plan
+        // VTPass variation codes for sandbox
         $planMap = [
-            '1GB - 30 Days - ₦300' => ['amount' => 300, 'code' => 'mtn-10mb-100'],
-            '2GB - 30 Days - ₦600' => ['amount' => 600, 'code' => 'mtn-250mb-300'],
-            '5GB - 30 Days - ₦1,500' => ['amount' => 1500, 'code' => 'mtn-1gb-500'],
-            '10GB - 30 Days - ₦3,000' => ['amount' => 3000, 'code' => 'mtn-2gb-1000'],
+            '1GB - 30 Days - ₦300' => ['amount' => 300, 'code' => 'mtn-data'],
+            '2GB - 30 Days - ₦600' => ['amount' => 600, 'code' => 'mtn-data'],
+            '5GB - 30 Days - ₦1,500' => ['amount' => 1500, 'code' => 'mtn-data'],
+            '10GB - 30 Days - ₦3,000' => ['amount' => 3000, 'code' => 'mtn-data'],
         ];
 
-        $planDetails = $planMap[$request->plan]?? ['amount' => 300, 'code' => 'mtn-10mb-100'];
+        $planDetails = $planMap[$request->plan] ?? ['amount' => 300, 'code' => 'mtn-data'];
         $amount = $planDetails['amount'];
-        $variationCode = $planDetails['code'];
-        $balance = $user->balance?? 0;
+        $serviceID = strtolower($request->network).'-data';
+        $balance = $user->balance ?? 0;
 
         if ($balance < $amount) {
             return back()->with('error', 'Insufficient balance. Fund your wallet first.');
@@ -53,15 +53,15 @@ class WalletController extends Controller
 
         $requestId = date('YmdHis'). Str::random(5);
         
-        // Call VTPass API
+        // Call VTPass Sandbox API
         $response = Http::withHeaders([
             'api-key' => env('VTPASS_API_KEY'),
             'secret-key' => env('VTPASS_SECRET_KEY'),
         ])->post('https://sandbox.vtpass.com/api/pay', [
             'request_id' => $requestId,
-            'serviceID' => strtolower($request->network). '-data',
+            'serviceID' => $serviceID,
             'billersCode' => $request->phone,
-            'variation_code' => $variationCode,
+            'variation_code' => $planDetails['code'],
             'amount' => $amount,
             'phone' => $request->phone,
         ]);
@@ -70,6 +70,7 @@ class WalletController extends Controller
         $status = 'failed';
         $apiResponse = json_encode($result);
 
+        // VTPass success code is "000"
         if ($response->successful() && isset($result['code']) && $result['code'] === '000') {
             $status = 'success';
             $user->balance = $balance - $amount;
@@ -91,10 +92,10 @@ class WalletController extends Controller
         ]);
 
         if ($status === 'success') {
-            return back()->with('success', 'Data delivered! '. $request->plan. ' sent to '. $request->phone);
+            return back()->with('success', 'Data delivered! '.$request->plan.' sent to '.$request->phone);
         } else {
-            $errorMsg = $result['response_description']?? 'VTPass API error. Try again.';
-            return back()->with('error', 'Transaction failed: '. $errorMsg);
+            $errorMsg = $result['response_description'] ?? 'VTPass API error. Try again.';
+            return back()->with('error', 'Transaction failed: '.$errorMsg);
         }
     }
 
@@ -111,7 +112,7 @@ class WalletController extends Controller
         $amount = $request->amount;
         $reference = 'FUND_'. Str::upper(Str::random(10));
 
-        $balanceBefore = $user->balance?? 0;
+        $balanceBefore = $user->balance ?? 0;
         $user->balance = $balanceBefore + $amount;
         $user->save();
 
