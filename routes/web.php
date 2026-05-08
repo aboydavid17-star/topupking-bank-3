@@ -82,4 +82,23 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/fund-wallet', [WalletController::class, 'fundWallet'])->name('wallet.fund.post');
     Route::get('/buy-data', [WalletController::class, 'buyDataPage'])->name('wallet.buy-data');
     Route::post('/buy-data', [WalletController::class, 'buyData'])->name('wallet.buy-data.post');
+});<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+
+// TEMP ROUTE - DELETE AFTER USE
+Route::get('/boss-run-migrate', function() {
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        $output = Artisan::output();
+        return "<h1>MIGRATION RESULT:</h1><pre>$output</pre><br><h2>NOW DELETE THIS ROUTE!</h2>";
+    } catch (Exception $e) {
+        return "<h1>ERROR:</h1><pre>" . $e->getMessage() . "</pre>";
+    }
 });
+
+// YOUR NORMAL ROUTES BELOW
+Auth::routes();
+Route::get('/', function() { return redirect()->route('login'); });
+// ... rest of your routes
