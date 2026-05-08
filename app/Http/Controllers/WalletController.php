@@ -5,18 +5,55 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use App\Models\Wallet;
 use App\Models\Transaction;
-use Illuminate\Support\Str;
 
 class WalletController extends Controller
 {
     public function index()
     {
         $user = Auth::user();
+        
+        // AUTO-CREATE WALLET IF IT DOESN'T EXIST
+        $wallet = Wallet::firstOrCreate(
+            ['user_id' => $user->id],
+            ['balance' => 0.00]
+        );
+        
         $transactions = Transaction::where('user_id', $user->id)
-            ->latest()->take(5)->get();
+            ->latest()
+            ->take(10)
+            ->get();
+        
+        return view('wallet.index', compact('wallet', 'transactions'));
+    }
 
-        return view('wallet.index', compact('user', 'transactions'));
+    public function fundWalletPage()
+    {
+        return view('wallet.fund');
+    }
+
+    public function fundWallet(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:100|max:50000'
+        ]);
+
+        $user = Auth::user();
+        $wallet = Wallet::where('user_id', $user->id)->first();
+
+        $wallet->balance += $request->amount;
+        $wallet->save();
+
+        Transaction::create([
+            'user_id' => $user->id,
+            'type' => 'credit',
+            'amount' => $request->amount,
+            'description' => 'Wallet funded',
+            'status' => 'completed'
+        ]);
+
+        return redirect()->route('wallet')->with('success', 'Wallet funded successfully! ₦' . number_format($request->amount, 2) . ' added.');
     }
 
     public function buyDataPage()
@@ -27,108 +64,68 @@ class WalletController extends Controller
     public function buyData(Request $request)
     {
         $request->validate([
-            'network' => 'required|in:MTN,GLO,AIRTEL,9MOBILE',
             'phone' => 'required|string|min:11|max:11',
-            'plan' => 'required',
+            'network' => 'required|string',
+            'plan' => 'required|numeric'
         ]);
 
         $user = Auth::user();
+        $wallet = Wallet::where('user_id', $user->id)->first();
 
-        // VTPass variation codes for sandbox
-        $planMap = [
-            '1GB - 30 Days - ₦300' => ['amount' => 300, 'code' => 'mtn-data'],
-            '2GB - 30 Days - ₦600' => ['amount' => 600, 'code' => 'mtn-data'],
-            '5GB - 30 Days - ₦1,500' => ['amount' => 1500, 'code' => 'mtn-data'],
-            '10GB - 30 Days - ₦3,000' => ['amount' => 3000, 'code' => 'mtn-data'],
-        ];
-
-        $planDetails = $planMap[$request->plan] ?? ['amount' => 300, 'code' => 'mtn-data'];
-        $amount = $planDetails['amount'];
-        $serviceID = strtolower($request->network).'-data';
-        $balance = $user->balance ?? 0;
-
-        if ($balance < $amount) {
-            return back()->with('error', 'Insufficient balance. Fund your wallet first.');
+        if ($wallet->balance < $request->plan) {
+            return back()->with('error', 'Insufficient balance. Please fund your wallet.');
         }
 
-        $requestId = date('YmdHis'). Str::random(5);
-        
-        // Call VTPass Sandbox API
+        // VTPass API Call
         $response = Http::withHeaders([
             'api-key' => env('VTPASS_API_KEY'),
             'secret-key' => env('VTPASS_SECRET_KEY'),
-        ])->post('https://sandbox.vtpass.com/api/pay', [
-            'request_id' => $requestId,
-            'serviceID' => $serviceID,
+            'Content-Type' => 'application/json'
+        ])->post('https://vtpass.com/api/pay', [
+            'request_id' => uniqid('topupking_'),
+            'serviceID' => $request->network, // mtn-data, glo-data, etc
             'billersCode' => $request->phone,
-            'variation_code' => $planDetails['code'],
-            'amount' => $amount,
-            'phone' => $request->phone,
+            'variation_code' => $this->getVariationCode($request->plan),
+            'amount' => $request->plan,
+            'phone' => $request->phone
         ]);
 
-        $result = $response->json();
-        $status = 'failed';
-        $apiResponse = json_encode($result);
+        if ($response->successful() && $response['code'] == '000') {
+            $wallet->balance -= $request->plan;
+            $wallet->save();
 
-        // VTPass success code is "000"
-        if ($response->successful() && isset($result['code']) && $result['code'] === '000') {
-            $status = 'success';
-            $user->balance = $balance - $amount;
-            $user->save();
+            Transaction::create([
+                'user_id' => $user->id,
+                'type' => 'debit',
+                'amount' => $request->plan,
+                'description' => 'Data purchase for ' . $request->phone,
+                'status' => 'completed'
+            ]);
+
+            return redirect()->route('wallet')->with('success', 'Data delivered! ' . $this->getDataSize($request->plan) . ' sent to ' . $request->phone);
         }
 
-        Transaction::create([
-            'user_id' => $user->id,
-            'type' => 'data',
-            'network' => $request->network,
-            'phone_number' => $request->phone,
-            'plan_name' => $request->plan,
-            'amount' => $amount,
-            'balance_before' => $balance,
-            'balance_after' => $user->balance,
-            'status' => $status,
-            'api_response' => $apiResponse,
-            'reference' => $requestId,
-        ]);
-
-        if ($status === 'success') {
-            return back()->with('success', 'Data delivered! '.$request->plan.' sent to '.$request->phone);
-        } else {
-            $errorMsg = $result['response_description'] ?? 'VTPass API error. Try again.';
-            return back()->with('error', 'Transaction failed: '.$errorMsg);
-        }
+        return back()->with('error', 'Data purchase failed. Please try again or contact support.');
     }
 
-    public function fundWalletPage()
+    private function getVariationCode($amount)
     {
-        return view('wallet.fund');
+        // MTN Data Plans - Sandbox
+        $plans = [
+            300 => 'mtn-10mb-100',   // 1GB
+            500 => 'mtn-100mb-200',  // 2GB
+            1000 => 'mtn-200mb-300', // 3GB
+        ];
+        return $plans[$amount] ?? 'mtn-10mb-100';
     }
 
-    public function fundWallet(Request $request)
+    private function getDataSize($amount)
     {
-        $request->validate(['amount' => 'required|numeric|min:100']);
-
-        $user = Auth::user();
-        $amount = $request->amount;
-        $reference = 'FUND_'. Str::upper(Str::random(10));
-
-        $balanceBefore = $user->balance ?? 0;
-        $user->balance = $balanceBefore + $amount;
-        $user->save();
-
-        Transaction::create([
-            'user_id' => $user->id,
-            'type' => 'funding',
-            'network' => 'Paystack',
-            'phone_number' => $user->email,
-            'plan_name' => 'Wallet Funding',
-            'amount' => $amount,
-            'balance_before' => $balanceBefore,
-            'balance_after' => $user->balance,
-            'status' => 'success',
-            'reference' => $reference,
-        ]);
-
-        return back()->with('success', 'Wallet funded successfully! ₦'. number_format($amount, 2). ' added.');
+        $sizes = [
+            300 => '1GB',
+            500 => '2GB', 
+            1000 => '3GB',
+        ];
+        return $sizes[$amount] ?? '1GB';
     }
 }
