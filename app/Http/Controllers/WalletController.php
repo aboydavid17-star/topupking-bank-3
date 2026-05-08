@@ -33,7 +33,6 @@ class WalletController extends Controller
 
         $user = Auth::user();
 
-        // Extract amount from plan string
         $planParts = explode(' - ₦', $request->plan);
         $amount = count($planParts) > 1? (float) str_replace(',', '', $planParts[1]) : 300;
         $balance = $user->balance?? 0;
@@ -59,5 +58,38 @@ class WalletController extends Controller
         ]);
 
         return back()->with('success', 'Data purchase successful! '. $request->plan. ' sent to '. $request->phone);
+    }
+
+    public function fundWalletPage()
+    {
+        return view('wallet.fund');
+    }
+
+    public function fundWallet(Request $request)
+    {
+        $request->validate(['amount' => 'required|numeric|min:100']);
+
+        $user = Auth::user();
+        $amount = $request->amount;
+        $reference = 'FUND_'. Str::upper(Str::random(10));
+
+        $balanceBefore = $user->balance?? 0;
+        $user->balance = $balanceBefore + $amount;
+        $user->save();
+
+        Transaction::create([
+            'user_id' => $user->id,
+            'type' => 'funding',
+            'network' => 'Paystack',
+            'phone_number' => $user->email,
+            'plan_name' => 'Wallet Funding',
+            'amount' => $amount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $user->balance,
+            'status' => 'success',
+            'reference' => $reference,
+        ]);
+
+        return back()->with('success', 'Wallet funded successfully! ₦'. number_format($amount, 2). ' added.');
     }
 }
