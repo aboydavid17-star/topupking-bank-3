@@ -14,15 +14,11 @@ class WalletController extends Controller
         $this->middleware('auth');
     }
 
-    /**
-     * Show wallet dashboard
-     */
     public function index()
     {
         $user = Auth::user();
         $wallet = $user->wallet;
         
-        // Auto-create wallet if missing
         if (!$wallet) {
             $wallet = Wallet::create([
                 'user_id' => $user->id,
@@ -38,41 +34,28 @@ class WalletController extends Controller
         return view('wallet.index', compact('wallet', 'transactions'));
     }
 
-    /**
-     * Show fund wallet page
-     */
     public function showFund()
     {
         $wallet = Auth::user()->wallet;
         return view('wallet.fund', compact('wallet'));
     }
 
-    /**
-     * Fund wallet - Paystack coming soon
-     */
     public function fundWallet(Request $request)
     {
         $request->validate([
             'amount' => 'required|numeric|min:100|max:50000',
         ]);
 
-        // TODO: Add Paystack integration here
-        
-        return back()->with('success', 'Funding successful! Paystack integration coming next.');
+        // TODO: Add Paystack here
+        return back()->with('success', 'Paystack integration coming next!');
     }
 
-    /**
-     * Show buy data page - THIS FIXES YOUR ERROR
-     */
     public function showBuyData()
     {
         $wallet = Auth::user()->wallet;
         return view('wallet.buy-data', compact('wallet'));
     }
 
-    /**
-     * Buy data - VTPass coming soon
-     */
     public function buyData(Request $request)
     {
         $request->validate([
@@ -81,14 +64,46 @@ class WalletController extends Controller
             'plan' => 'required|string',
         ]);
 
-        // TODO: Add VTPass API integration here
-        
-        return back()->with('success', 'Data purchase successful! VTPass integration coming next.');
+        // TODO: Add VTPass here
+        return back()->with('success', 'VTPass integration coming next!');
     }
 
-    /**
-     * Show all transactions
-     */
+    public function showBuyAirtime()
+    {
+        $wallet = Auth::user()->wallet;
+        return view('wallet.buy-airtime', compact('wallet'));
+    }
+
+    public function buyAirtime(Request $request)
+    {
+        $request->validate([
+            'network' => 'required|string',
+            'phone' => 'required|string|min:11|max:11',
+            'amount' => 'required|numeric|min:50',
+        ]);
+
+        // TODO: Add VTPass here
+        return back()->with('success', 'Airtime purchase coming next!');
+    }
+
+    public function showCable()
+    {
+        $wallet = Auth::user()->wallet;
+        return view('wallet.cable', compact('wallet'));
+    }
+
+    public function buyCable(Request $request)
+    {
+        $request->validate([
+            'decoder' => 'required|string',
+            'iuc' => 'required|string',
+            'plan' => 'required|string',
+        ]);
+
+        // TODO: Add VTPass here
+        return back()->with('success', 'Cable payment coming next!');
+    }
+
     public function transactions()
     {
         $transactions = Transaction::where('user_id', Auth::id())
