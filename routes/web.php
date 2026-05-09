@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WalletController;
 
-// Test route - use this to confirm app works
+// Test route
 Route::get('/ping', fn() => 'TOPUPKING IS ALIVE - ' . config('app.url'));
 
 // Root route - NO AUTH MIDDLEWARE HERE
@@ -20,4 +20,5 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/fund', [WalletController::class, 'fund'])->name('fund.wallet');
 });
 
+// THIS LINE IS CRITICAL - DO NOT DELETE
 require __DIR__.'/auth.php';
