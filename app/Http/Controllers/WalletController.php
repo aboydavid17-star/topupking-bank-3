@@ -1,148 +1,73 @@
-<?php
-
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
-use Unicodeveloper\Paystack\Facades\Paystack;
-
-class WalletController extends Controller
+public function handleGatewayCallback()
 {
-    public function index()
-    {
-        $user = Auth::user();
-        $balance = $user->balance ?? 0;
-        return view('wallet.index', compact('user', 'balance'));
+    $reference = request()->query('reference');
+    
+    if (empty($reference)) {
+        return redirect()->route('dashboard')->with('error', 'No transaction reference supplied');
     }
 
-    public function showFundForm()
-    {
-        return view('wallet.fund');
+    $secretKey = env('PAYSTACK_SECRET_KEY');
+    
+    // HARDCODED URL - NO CONFIG NEEDED
+    $url = "https://api.paystack.co/transaction/verify/" . rawurlencode($reference);
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "Authorization: Bearer " . $secretKey,
+        "Cache-Control: no-cache",
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_error($ch);
+    curl_close($ch);
+
+    if ($err) {
+        \Log::error('Paystack cURL Error: ' . $err);
+        return redirect()->route('dashboard')->with('error', 'Payment verification failed');
     }
 
-    public function fund(Request $request)
-    {
-        $request->validate([
-            'amount' => 'required|numeric|min:100|max:50000'
-        ]);
-
-        return view('wallet.pay', [
-            'amount' => $request->amount * 100,
-            'email' => Auth::user()->email,
-            'reference' => Paystack::genTranxRef()
-        ]);
+    if ($httpcode != 200) {
+        \Log::error('Paystack HTTP Error: ' . $httpcode . ' Response: ' . $response);
+        return redirect()->route('dashboard')->with('error', 'Payment verification failed');
     }
 
-    public function redirectToGateway(Request $request)
-    {
-        try {
-            return Paystack::getAuthorizationUrl()->redirectNow();
-        } catch(\Exception $e) {
-            return back()->withErrors(['paystack' => $e->getMessage()]);
-        }
+    $result = json_decode($response, true);
+
+    if (!$result['status'] || $result['data']['status'] !== 'success') {
+        return redirect()->route('dashboard')->with('error', 'Payment was not successful');
     }
 
-    public function handleGatewayCallback()
-    {
-        $paymentDetails = Paystack::getPaymentData();
+    $user = auth()->user();
+    $amount = $result['data']['amount'] / 100; // Convert from kobo to naira
+    
+    // Prevent double funding
+    $exists = \App\Models\Transaction::where('reference', $reference)->exists();
+    if ($exists) {
+        return redirect()->route('dashboard')->with('info', 'Transaction already processed');
+    }
 
-        if($paymentDetails['data']['status'] == 'success') {
-            $user = Auth::user();
-            $amount = $paymentDetails['data']['amount'] / 100;
-            $user->increment('balance', $amount);
-            return redirect()->route('wallet')->with('success', "Wallet funded with ₦{$amount} successfully!");
-        }
+    \DB::transaction(function () use ($user, $amount, $reference) {
+        $balanceBefore = $user->wallet;
         
-        return redirect()->route('wallet')->withErrors(['payment' => 'Payment failed. Try again.']);
-    }
-
-    public function showDataForm()
-    {
-        $response = Http::withBasicAuth(
-            config('services.vtpass.username'), 
-            config('services.vtpass.password')
-        )->get(config('services.vtpass.url') . '/service-variations?serviceID=mtn-data');
+        $user->increment('wallet', $amount);
+        $user->refresh();
         
-        $plans = $response->json()['content']['variations'] ?? [];
-        return view('wallet.data', compact('plans'));
-    }
-
-    public function buyData(Request $request)
-    {
-        $request->validate([
-            'phone' => 'required|numeric|digits:11',
-            'variation_code' => 'required',
-            'amount' => 'required|numeric',
-        ]);
-
-        $user = Auth::user();
-        $amount = $request->amount;
-        
-        if($user->balance < $amount) {
-            return back()->withErrors(['balance' => 'Insufficient wallet balance']);
-        }
-
-        $request_id = Str::uuid();
-        
-        $response = Http::withHeaders([
-            'api-key' => config('services.vtpass.api_key'),
-            'secret-key' => config('services.vtpass.secret_key'),
-        ])->post(config('services.vtpass.url') . '/pay', [
-            'request_id' => $request_id,
-            'serviceID' => 'mtn-data',
-            'billersCode' => $request->phone,
-            'variation_code' => $request->variation_code,
+        \App\Models\Transaction::create([
+            'user_id' => $user->id,
+            'type' => 'credit',
+            'purpose' => 'funding',
             'amount' => $amount,
-            'phone' => $request->phone,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $user->wallet,
+            'reference' => $reference,
+            'status' => 'successful',
+            'description' => 'Wallet funding via Paystack'
         ]);
+    });
 
-        if($response->json()['code'] == '000') {
-            $user->decrement('balance', $amount);
-            return redirect()->route('wallet')->with('success', 'Data purchase successful!');
-        }
-
-        return back()->withErrors(['vtpass' => $response->json()['response_description'] ?? 'Transaction failed']);
-    }
-
-    public function showAirtimeForm()
-    {
-        return view('wallet.airtime');
-    }
-
-    public function buyAirtime(Request $request)
-    {
-        $request->validate([
-            'phone' => 'required|numeric|digits:11',
-            'amount' => 'required|numeric|min:50|max:5000',
-            'network' => 'required|in:mtn,glo,airtel,9mobile'
-        ]);
-
-        $user = Auth::user();
-        $amount = $request->amount;
-        
-        if($user->balance < $amount) {
-            return back()->withErrors(['balance' => 'Insufficient wallet balance']);
-        }
-
-        $request_id = Str::uuid();
-        
-        $response = Http::withHeaders([
-            'api-key' => config('services.vtpass.api_key'),
-            'secret-key' => config('services.vtpass.secret_key'),
-        ])->post(config('services.vtpass.url') . '/pay', [
-            'request_id' => $request_id,
-            'serviceID' => $request->network,
-            'amount' => $amount,
-            'phone' => $request->phone,
-        ]);
-
-        if($response->json()['code'] == '000') {
-            $user->decrement('balance', $amount);
-            return redirect()->route('wallet')->with('success', 'Airtime purchase successful!');
-        }
-
-        return back()->withErrors(['vtpass' => $response->json()['response_description'] ?? 'Transaction failed']);
-    }
+    return redirect()->route('dashboard')->with('success', 'Wallet funded successfully! ₦' . number_format($amount, 2));
 }
