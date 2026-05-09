@@ -2,24 +2,15 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
-
-    'postmark' => [
-        'key' => env('POSTMARK_API_KEY'),
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
     ],
 
-    'resend' => [
-        'key' => env('RESEND_API_KEY'),
+    'postmark' => [
+        'token' => env('POSTMARK_TOKEN'),
     ],
 
     'ses' => [
@@ -28,11 +19,19 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
+    'paystack' => [
+        'publicKey' => env('PAYSTACK_PUBLIC_KEY'),
+        'secretKey' => env('PAYSTACK_SECRET_KEY'),
+        'baseUrl' => env('PAYSTACK_PAYMENT_URL', 'https://api.paystack.co'),
+        'merchantEmail' => 'davidjustice788@gmail.com',
+    ],
+
+    'vtpass' => [
+        'username' => env('VTPASS_USERNAME'),
+        'password' => env('VTPASS_PASSWORD'),
+        'api_key' => env('VTPASS_API_KEY'),
+        'secret_key' => env('VTPASS_SECRET_KEY'),
+        'url' => env('VTPASS_URL', 'https://sandbox.vtpass.com/api'),
     ],
 
 ];
