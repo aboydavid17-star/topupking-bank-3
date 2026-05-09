@@ -10,9 +10,23 @@ class Transaction extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'type', 'network', 'phone_number', 'plan_name',
-        'amount', 'balance_before', 'balance_after', 'status',
-        'api_response', 'reference'
+        'user_id',
+        'type',
+        'purpose',
+        'amount',
+        'balance_before',
+        'balance_after',
+        'reference',
+        'status',
+        'description',
+        'meta'
+    ];
+
+    protected $casts = [
+        'meta' => 'array',
+        'amount' => 'decimal:2',
+        'balance_before' => 'decimal:2',
+        'balance_after' => 'decimal:2',
     ];
 
     public function user()
