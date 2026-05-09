@@ -2,114 +2,70 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Wallet;
-use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class WalletController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
+    /**
+     * Show wallet dashboard
+     */
     public function index()
     {
         $user = Auth::user();
-        $wallet = $user->wallet;
         
-        if (!$wallet) {
-            $wallet = Wallet::create([
-                'user_id' => $user->id,
-                'balance' => 0.00,
-            ]);
-        }
-
-        $transactions = Transaction::where('user_id', $user->id)
-            ->latest()
-            ->take(5)
-            ->get();
-
-        return view('wallet.index', compact('wallet', 'transactions'));
+        // If you have a wallets table, use this:
+        // $balance = $user->wallet->balance ?? 0;
+        
+        // If you store balance on users table, use this:
+        $balance = $user->balance ?? 0;
+        
+        return view('wallet.index', [
+            'balance' => $balance,
+            'user' => $user
+        ]);
     }
 
-    public function showFund()
+    /**
+     * Show fund wallet form
+     */
+    public function showFundForm()
     {
-        $wallet = Auth::user()->wallet;
-        return view('wallet.fund', compact('wallet'));
+        return view('wallet.fund');
     }
 
-    public function fundWallet(Request $request)
+    /**
+     * Handle fund wallet POST
+     */
+    public function fund(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:100|max:50000',
+            'amount' => 'required|numeric|min:100|max:100000'
         ]);
 
-        // TODO: Add Paystack here
-        return back()->with('success', 'Paystack integration coming next!');
+        $amount = $request->amount;
+        
+        // TODO: Add Paystack payment logic here
+        return redirect()->route('wallet')->with('success', "Ready to fund ₦{$amount}. Paystack integration next.");
     }
 
-    public function showBuyData()
+    /**
+     * Show buy data form
+     */
+    public function showDataForm()
     {
-        $wallet = Auth::user()->wallet;
-        return view('wallet.buy-data', compact('wallet'));
+        return view('wallet.data');
     }
 
+    /**
+     * Handle buy data POST
+     */
     public function buyData(Request $request)
     {
         $request->validate([
-            'network' => 'required|string',
-            'phone' => 'required|string|min:11|max:11',
-            'plan' => 'required|string',
+            'phone' => 'required|numeric|digits:11',
+            'plan' => 'required'
         ]);
 
-        // TODO: Add VTPass here
-        return back()->with('success', 'VTPass integration coming next!');
-    }
-
-    public function showBuyAirtime()
-    {
-        $wallet = Auth::user()->wallet;
-        return view('wallet.buy-airtime', compact('wallet'));
-    }
-
-    public function buyAirtime(Request $request)
-    {
-        $request->validate([
-            'network' => 'required|string',
-            'phone' => 'required|string|min:11|max:11',
-            'amount' => 'required|numeric|min:50',
-        ]);
-
-        // TODO: Add VTPass here
-        return back()->with('success', 'Airtime purchase coming next!');
-    }
-
-    public function showCable()
-    {
-        $wallet = Auth::user()->wallet;
-        return view('wallet.cable', compact('wallet'));
-    }
-
-    public function buyCable(Request $request)
-    {
-        $request->validate([
-            'decoder' => 'required|string',
-            'iuc' => 'required|string',
-            'plan' => 'required|string',
-        ]);
-
-        // TODO: Add VTPass here
-        return back()->with('success', 'Cable payment coming next!');
-    }
-
-    public function transactions()
-    {
-        $transactions = Transaction::where('user_id', Auth::id())
-            ->latest()
-            ->paginate(20);
-
-        return view('wallet.transactions', compact('transactions'));
-    }
-}
+        // TODO: Add
