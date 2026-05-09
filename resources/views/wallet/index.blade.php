@@ -1,75 +1,116 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>TopupKing - Wallet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6; 
+            padding: 16px;
+            color: #1f2937;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            padding: 24px; 
+            border-radius: 16px; 
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .header h1 { font-size: 24px; margin-bottom: 4px; }
+        .header p { opacity: 0.95; font-size: 14px; }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 16px; 
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .balance-card { text-align: center; }
+        .balance-label { color: #6b7280; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .balance-amount { font-size: 42px; font-weight: 700; color: #111827; }
+        .btn { 
+            display: block; 
+            width: 100%; 
+            padding: 14px; 
+            margin: 8px 0; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 15px; 
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { background: #f3f4f6; color: #374151; }
+        .btn-secondary:hover { background: #e5e7eb; }
+        .alert { 
+            padding: 14px; 
+            border-radius: 10px; 
+            margin-bottom: 16px;
+            background: #d1fae5; 
+            color: #065f46;
+            border-left: 4px solid #10b981;
+            font-size: 14px;
+        }
+        .section-title { 
+            font-size: 16px; 
+            font-weight: 600; 
+            margin-bottom: 12px; 
+            color: #111827;
+        }
+        .logout { text-align: center; margin-top: 24px; }
+        .logout button { 
+            background: none; 
+            border: none; 
+            color: #667eea; 
+            cursor: pointer; 
+            font-size: 14px;
+            text-decoration: underline;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TopupKing 👑</h1>
+            <p>{{ $user->name }}</p>
+        </div>
 
-@section('content')
-<div class="container">
-    <div class="wallet-header">
-        <h1>TopupKing 👑</h1>
-        <div class="user-info">
-            <span>{{ Auth::user()->name }}</span>
-            <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+        @if(session('success'))
+            <div class="alert">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <div class="card balance-card">
+            <div class="balance-label">Wallet Balance</div>
+            <div class="balance-amount">₦{{ number_format($balance, 2) }}</div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Quick Actions</div>
+            <a href="{{ route('wallet.fund') }}" class="btn btn-primary">💰 Fund Wallet</a>
+            <a href="{{ route('wallet.data') }}" class="btn btn-secondary">📱 Buy Data</a>
+            <a href="{{ route('wallet.airtime') }}" class="btn btn-secondary">📞 Buy Airtime</a>
+        </div>
+
+        <div class="logout">
+            <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="btn-logout">Logout</button>
+                <button type="submit">Logout</button>
             </form>
         </div>
     </div>
-
-    <div class="card balance-card">
-        <p class="label">Wallet Balance</p>
-        <h2 class="balance">₦{{ number_format($wallet->balance ?? 0, 2) }}</h2>
-    </div>
-
-    <div class="card">
-        <h3>Quick Actions</h3>
-        
-        <!-- FIXED: Changed wallet.fund to fund.wallet -->
-        <a href="{{ route('fund.wallet') }}" class="btn btn-primary">
-            💰 Fund Wallet
-        </a>
-        
-        <!-- FIXED: Changed wallet.buy-data to buy.data -->
-        <a href="{{ route('buy.data') }}" class="btn btn-success">
-            📱 Buy Data
-        </a>
-        
-        <!-- FIXED: Changed wallet.buy-airtime to buy.airtime -->
-        <a href="{{ route('buy.airtime') }}" class="btn btn-secondary">
-            📞 Buy Airtime
-        </a>
-        
-        <!-- FIXED: Changed wallet.cable to cable -->
-        <a href="{{ route('cable') }}" class="btn btn-secondary">
-            📺 Cable TV
-        </a>
-    </div>
-
-    <div class="card">
-        <h3>Recent Transactions</h3>
-        @if($transactions->count() > 0)
-            @foreach($transactions as $transaction)
-                <div class="transaction">
-                    <span>{{ $transaction->type }}</span>
-                    <span>₦{{ number_format($transaction->amount, 2) }}</span>
-                </div>
-            @endforeach
-        @else
-            <p class="alert-info">No transactions yet. Fund your wallet to get started!</p>
-        @endif
-    </div>
-</div>
-
-<style>
-.container { max-width: 600px; margin: 0 auto; padding: 20px; }
-.wallet-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-.balance-card { text-align: center; }
-.balance { font-size: 48px; color: #10b981; margin: 10px 0; }
-.btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; text-decoration: none; text-align: center; cursor: pointer; }
-.btn-primary { background: #3b82f6; color: white; }
-.btn-success { background: #10b981; color: white; }
-.btn-secondary { background: #6b7280; color: white; }
-.btn-logout { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-.label { color: #6b7280; margin: 0; }
-.alert-info { background: #dbeafe; color: #1e40af; padding: 12px; border-radius: 6px; }
-.transaction { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
-</style>
-@endsection
+</body>
+</html>
