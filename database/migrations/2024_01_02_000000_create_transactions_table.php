@@ -8,21 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::dropIfExists('transactions');
-        
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('type');
-            $table->string('network');
-            $table->string('phone_number');
-            $table->string('plan_name');
-            $table->decimal('amount', 15, 2);
-            $table->decimal('balance_before', 15, 2);
-            $table->decimal('balance_after', 15, 2);
-            $table->string('status')->default('pending');
-            $table->text('api_response')->nullable();
+            $table->enum('type', ['credit', 'debit']);
+            $table->string('purpose'); // funding, airtime, transfer, withdrawal
+            $table->decimal('amount', 12, 2);
+            $table->decimal('balance_before', 12, 2);
+            $table->decimal('balance_after', 12, 2);
             $table->string('reference')->unique();
+            $table->enum('status', ['successful', 'pending', 'failed'])->default('successful');
+            $table->text('description')->nullable();
+            $table->json('meta')->nullable(); // store extra data like network, phone
             $table->timestamps();
         });
     }
