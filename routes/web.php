@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| TopupKing Web Routes - BUG #14 KILLED
 |--------------------------------------------------------------------------
 */
 
@@ -27,16 +27,24 @@ Route::post('/register', [RegisterController::class, 'register']);
 // Protected Routes - Must be logged in
 Route::middleware(['auth'])->group(function () {
     
-    // Wallet Dashboard
-    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
+    // Wallet Dashboard - RENAMED TO 'wallet' TO FIX BUTTONS
+    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
     
     // Fund Wallet
     Route::get('/wallet/fund', [WalletController::class, 'showFund'])->name('wallet.fund');
     Route::post('/wallet/fund', [WalletController::class, 'fundWallet'])->name('wallet.fund.post');
     
-    // Buy Data - THIS FIXES YOUR ERROR
+    // Buy Data
     Route::get('/wallet/buy-data', [WalletController::class, 'showBuyData'])->name('wallet.buy-data');
     Route::post('/wallet/buy-data', [WalletController::class, 'buyData'])->name('wallet.buy-data.post');
+    
+    // Buy Airtime
+    Route::get('/wallet/buy-airtime', [WalletController::class, 'showBuyAirtime'])->name('wallet.buy-airtime');
+    Route::post('/wallet/buy-airtime', [WalletController::class, 'buyAirtime'])->name('wallet.buy-airtime.post');
+    
+    // Cable TV
+    Route::get('/wallet/cable', [WalletController::class, 'showCable'])->name('wallet.cable');
+    Route::post('/wallet/cable', [WalletController::class, 'buyCable'])->name('wallet.cable.post');
     
     // Transaction History
     Route::get('/wallet/transactions', [WalletController::class, 'transactions'])->name('wallet.transactions');
