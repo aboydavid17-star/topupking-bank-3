@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 
 /*
 |--------------------------------------------------------------------------
-| TopupKing Web Routes - BUG #14 KILLED
+| TopupKing Routes - ALL BUTTONS WORKING
 |--------------------------------------------------------------------------
 */
 
@@ -27,25 +27,25 @@ Route::post('/register', [RegisterController::class, 'register']);
 // Protected Routes - Must be logged in
 Route::middleware(['auth'])->group(function () {
     
-    // Wallet Dashboard - RENAMED TO 'wallet' TO FIX BUTTONS
+    // Dashboard - blade files call route('wallet')
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
     
-    // Fund Wallet
-    Route::get('/wallet/fund', [WalletController::class, 'showFund'])->name('wallet.fund');
-    Route::post('/wallet/fund', [WalletController::class, 'fundWallet'])->name('wallet.fund.post');
+    // Fund Wallet - blade files call route('fund.wallet') 
+    Route::get('/wallet/fund', [WalletController::class, 'showFund'])->name('fund.wallet');
+    Route::post('/wallet/fund', [WalletController::class, 'fundWallet'])->name('fund.wallet.post');
     
-    // Buy Data
-    Route::get('/wallet/buy-data', [WalletController::class, 'showBuyData'])->name('wallet.buy-data');
-    Route::post('/wallet/buy-data', [WalletController::class, 'buyData'])->name('wallet.buy-data.post');
+    // Buy Data - blade files call route('buy.data')
+    Route::get('/wallet/buy-data', [WalletController::class, 'showBuyData'])->name('buy.data');
+    Route::post('/wallet/buy-data', [WalletController::class, 'buyData'])->name('buy.data.post');
     
-    // Buy Airtime
-    Route::get('/wallet/buy-airtime', [WalletController::class, 'showBuyAirtime'])->name('wallet.buy-airtime');
-    Route::post('/wallet/buy-airtime', [WalletController::class, 'buyAirtime'])->name('wallet.buy-airtime.post');
+    // Buy Airtime - blade files call route('buy.airtime')
+    Route::get('/wallet/buy-airtime', [WalletController::class, 'showBuyAirtime'])->name('buy.airtime');
+    Route::post('/wallet/buy-airtime', [WalletController::class, 'buyAirtime'])->name('buy.airtime.post');
     
-    // Cable TV
-    Route::get('/wallet/cable', [WalletController::class, 'showCable'])->name('wallet.cable');
-    Route::post('/wallet/cable', [WalletController::class, 'buyCable'])->name('wallet.cable.post');
+    // Cable TV - blade files call route('cable')
+    Route::get('/wallet/cable', [WalletController::class, 'showCable'])->name('cable');
+    Route::post('/wallet/cable', [WalletController::class, 'buyCable'])->name('cable.post');
     
     // Transaction History
-    Route::get('/wallet/transactions', [WalletController::class, 'transactions'])->name('wallet.transactions');
+    Route::get('/wallet/transactions', [WalletController::class, 'transactions'])->name('transactions');
 });
