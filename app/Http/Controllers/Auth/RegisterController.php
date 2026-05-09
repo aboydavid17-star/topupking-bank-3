@@ -4,33 +4,77 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Models\Wallet;
+use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
-    public function showRegistrationForm()
+    use RegistersUsers;
+
+    /**
+     * Where to redirect users after registration.
+     *
+     * @var string
+     */
+    protected $redirectTo = '/wallet';
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
     {
-        return view('auth.register');
+        $this->middleware('guest');
     }
 
-    public function register(Request $request)
+    /**
+     * Get a validator for an incoming registration request.
+     *
+     * @param  array  $data
+     * @return \Illuminate\Contracts\Validation\Validator
+     */
+    protected function validator(array $data)
     {
-        $request->validate([
+        return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
+    }
 
+    /**
+     * Create a new user instance after a valid registration.
+     *
+     * @param  array  $data
+     * @return \App\Models\User
+     */
+    protected function create(array $data)
+    {
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
         ]);
 
-        Auth::login($user);
+        // Auto-create wallet for new user
+        Wallet::create([
+            'user_id' => $user->id,
+            'balance' => 0.00,
+        ]);
 
-        return redirect('dashboard');
+        return $user;
+    }
+
+    /**
+     * Show the application registration form.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function showRegistrationForm()
+    {
+        return view('auth.register');
     }
 }
