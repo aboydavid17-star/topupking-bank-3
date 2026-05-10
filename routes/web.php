@@ -34,3 +34,11 @@ Route::get('/airtime', function () {
 Route::get('/data', function () {
     return redirect('/dashboard');
 })->middleware('auth')->name('data');
+Route::get('/check-balance', function () {
+    $user = auth()->user();
+    if (!$user) return 'Not logged in';
+    
+    $balance = DB::table('users')->where('id', $user->id)->value('wallet_balance');
+    
+    return "USER ID: {$user->id} <br> EMAIL: {$user->email} <br> REAL BALANCE IN DB: ₦" . number_format($balance, 2);
+})->middleware('auth');
