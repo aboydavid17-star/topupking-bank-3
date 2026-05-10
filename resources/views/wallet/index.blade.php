@@ -4,7 +4,7 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>My Wallet</h2>
-        <a href="{{ route('wallet.fund') }}" class="btn btn-primary">Fund Wallet</a>
+        <a href="{{ route('wallet.index') }}">Wallet</a>
     </div>
 
     @if(session('success'))
