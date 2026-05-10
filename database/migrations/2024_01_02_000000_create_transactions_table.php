@@ -12,14 +12,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->enum('type', ['credit', 'debit']);
-            $table->string('purpose'); // funding, airtime, transfer, withdrawal
-            $table->decimal('amount', 12, 2);
-            $table->decimal('balance_before', 12, 2);
-            $table->decimal('balance_after', 12, 2);
-            $table->string('reference')->unique();
-            $table->enum('status', ['successful', 'pending', 'failed'])->default('successful');
-            $table->text('description')->nullable();
-            $table->json('meta')->nullable(); // store extra data like network, phone
+            $table->decimal('amount', 10, 2);
+            $table->string('description')->nullable();
+            $table->string('status')->default('pending');
+            $table->string('reference')->nullable();
             $table->timestamps();
         });
     }
