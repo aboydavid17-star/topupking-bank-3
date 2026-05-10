@@ -16,3 +16,15 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+
+Route::get('/add-wallet-column', function () {
+    if (!Schema::hasColumn('users', 'wallet_balance')) {
+        Schema::table('users', function (Blueprint $table) {
+            $table->decimal('wallet_balance', 10, 2)->default(0)->after('email');
+        });
+        return 'Column wallet_balance added successfully! Now delete this route.';
+    }
+    return 'Column already exists.';
+});
