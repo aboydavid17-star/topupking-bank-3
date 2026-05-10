@@ -21,18 +21,9 @@ Route::get('/dashboard', function () {
     return view('dashboard', ['balance' => $balance]);
 })->middleware('auth')->name('dashboard');
 
-// Old wallet route - redirects to dashboard
 Route::get('/wallet', function () {
     return redirect('/dashboard');
 })->middleware('auth')->name('wallet.index');
-
-Route::get('/airtime', function () {
-    return redirect('/dashboard');
-})->middleware('auth')->name('airtime');
-
-Route::get('/data', function () {
-    return redirect('/dashboard');
-})->middleware('auth')->name('data');
 
 // FUND WALLET ROUTES
 Route::get('/fund-wallet', function () {
@@ -92,3 +83,61 @@ Route::get('/fund-wallet/callback', function () {
     
     return redirect('/dashboard')->with('error', 'Payment failed');
 })->middleware('auth');
+
+// BUY AIRTIME ROUTES
+Route::get('/airtime', function () {
+    return redirect()->route('airtime.form');
+})->middleware('auth')->name('airtime');
+
+Route::get('/buy-airtime', function () {
+    return view('buy-airtime');
+})->middleware('auth')->name('airtime.form');
+
+Route::post('/buy-airtime', function () {
+    $user = auth()->user();
+    $amount = request('amount');
+    $phone = request('phone');
+    $network = request('network'); // mtn, glo, airtel, etisalat
+
+    // Check balance first
+    $balance = DB::table('users')->where('id', $user->id)->value('wallet_balance');
+    if ($balance < $amount) {
+        return back()->with('error', 'Insufficient wallet balance. Your balance: ₦' . number_format($balance, 2));
+    }
+
+    $request_id = date('YmdHis') . rand(1000, 9999);
+    
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => "https://vtpass.com/api/pay",
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query([
+            'request_id' => $request_id,
+            'serviceID' => $network,
+            'amount' => $amount,
+            'phone' => $phone
+        ]),
+        CURLOPT_HTTPHEADER => [
+            "api-key: " . env('VTPASS_API_KEY'),
+            "secret-key: " . env('VTPASS_SECRET'),
+            "Content-Type: application/x-www-form-urlencoded"
+        ],
+    ));
+    $response = curl_exec($curl);
+    curl_close($curl);
+    $result = json_decode($response, true);
+
+    if (isset($result['code']) && $result['code'] == '000') {
+        // Success - deduct from wallet
+        DB::table('users')->where('id', $user->id)->decrement('wallet_balance', $amount);
+        return redirect('/dashboard')->with('success', '₦' . $amount . ' airtime sent to ' . $phone);
+    } else {
+        $error = $result['response_description'] ?? 'Transaction failed';
+        return back()->with('error', 'Airtime failed: ' . $error);
+    }
+})->middleware('auth')->name('airtime.buy');
+
+Route::get('/data', function () {
+    return redirect('/dashboard');
+})->middleware('auth')->name('data');
