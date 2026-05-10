@@ -14,7 +14,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'wallet_balance', // THIS LINE FIXES THE BUG
+        'wallet_balance',
     ];
 
     protected $hidden = [
@@ -27,7 +27,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'wallet_balance' => 'decimal:2', // ADD THIS TOO
+            'wallet_balance' => 'decimal:2',
         ];
     }
 
