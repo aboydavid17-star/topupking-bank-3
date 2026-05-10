@@ -31,7 +31,7 @@ class AirtimeController extends Controller
         // 1. CRITICAL: Use sandbox URL if VTPASS_ENV=sandbox
         $baseUrl = trim(config('services.vtpass.env')) === 'sandbox' || trim(env('VTPASS_ENV')) === 'sandbox'
             ? 'https://sandbox.vtpass.com/api'
-            : 'https://api.vtpass.com/api';
+            
         
         $url = $baseUrl . '/pay';
 
