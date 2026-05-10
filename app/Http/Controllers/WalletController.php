@@ -65,12 +65,10 @@ class WalletController extends Controller
         $reference = request()->query('reference');
         
         if (empty($reference)) {
-            return redirect()->route('dashboard')->with('error', 'No transaction reference supplied');
+            return redirect()->route('wallet.index')->with('error', 'No transaction reference supplied');
         }
 
         $secretKey = env('PAYSTACK_SECRET_KEY');
-        
-        // HARDCODED URL - NO CONFIG NEEDED
         $url = "https://api.paystack.co/transaction/verify/" . rawurlencode($reference);
         
         $ch = curl_init();
@@ -89,27 +87,26 @@ class WalletController extends Controller
 
         if ($err) {
             Log::error('Paystack cURL Error: ' . $err);
-            return redirect()->route('dashboard')->with('error', 'Payment verification failed');
+            return redirect()->route('wallet.index')->with('error', 'Payment verification failed');
         }
 
         if ($httpcode != 200) {
             Log::error('Paystack HTTP Error: ' . $httpcode . ' Response: ' . $response);
-            return redirect()->route('dashboard')->with('error', 'Payment verification failed');
+            return redirect()->route('wallet.index')->with('error', 'Payment verification failed');
         }
 
         $result = json_decode($response, true);
 
         if (!$result['status'] || $result['data']['status'] !== 'success') {
-            return redirect()->route('dashboard')->with('error', 'Payment was not successful');
+            return redirect()->route('wallet.index')->with('error', 'Payment was not successful');
         }
 
         $user = auth()->user();
-        $amount = $result['data']['amount'] / 100; // Convert from kobo to naira
+        $amount = $result['data']['amount'] / 100;
         
-        // Prevent double funding
         $exists = Transaction::where('reference', $reference)->exists();
         if ($exists) {
-            return redirect()->route('dashboard')->with('info', 'Transaction already processed');
+            return redirect()->route('wallet.index')->with('info', 'Transaction already processed');
         }
 
         DB::transaction(function () use ($user, $amount, $reference) {
@@ -131,6 +128,6 @@ class WalletController extends Controller
             ]);
         });
 
-        return redirect()->route('dashboard')->with('success', 'Wallet funded successfully! ₦' . number_format($amount, 2));
+        return redirect()->route('wallet.index')->with('success', 'Wallet funded successfully! ₦' . number_format($amount, 2));
     }
 }
