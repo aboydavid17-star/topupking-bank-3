@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+
+class AirtimeController extends Controller
+{
+    public function buyAirtime(Request $request)
+    {
+        $request->validate([
+            'network' => 'required|string',
+            'phone' => 'required|string|digits:11',
+            'amount' => 'required|numeric|min:50|max:10000',
+        ]);
+
+        $network = strtolower($request->network);
+        $phone = $request->phone;
+        $amount = (int) $request->amount;
+
+        if (Auth::user()->wallet_balance < $amount) {
+            return back()->with('error', 'Insufficient wallet balance');
+        }
+
+        $requestId = 'TKB' . date('YmdHis') . Str::upper(Str::random(4));
+
+        // 1. CRITICAL: Use sandbox URL if VTPASS_ENV=sandbox
+        $baseUrl = trim(config('services.vtpass.env')) === 'sandbox' || trim(env('VTPASS_ENV')) === 'sandbox'
+            ? 'https://sandbox.vtpass.com/api'
+            : 'https://api.vtpass.com/api';
+        
+        $url = $baseUrl . '/pay';
+
+        $serviceMap = [
+            'mtn' => 'mtn',
+            'glo' => 'glo',
+            'airtel' => 'airtel',
+            '9mobile' => 'etisalat',
+            'etisalat' => 'etisalat'
+        ];
+
+        $serviceID = $serviceMap[$network] ?? null;
+        if (!$serviceID) {
+            return back()->with('error', 'Invalid network selected');
+        }
+
+        $payload = [
+            'request_id' => $requestId,
+            'serviceID' => $serviceID,
+            'amount' => $amount,
+            'phone' => $phone
+        ];
+
+        // 2. CRITICAL: trim() removes hidden spaces that cause INVALID CREDENTIALS
+        $headers = [
+            'api-key' => trim(env('VTPASS_API_KEY')),
+            'secret-key' => trim(env('VTPASS_SECRET')),
+            'Content-Type' => 'application/json'
+        ];
+
+        // 3. UNCOMMENT NEXT LINE TO DEBUG - WILL SHOW YOU EXACTLY WHAT LARAVEL SENDS
+        // dd(['url' => $url, 'env' => env('VTPASS_ENV'), 'api_key' => env('VTPASS_API_KEY'), 'secret' => env('VTPASS_SECRET'), 'headers' => $headers, 'payload' => $payload]);
+
+        Log::info('VTpass Request', ['url' => $url, 'env' => env('VTPASS_ENV'), 'request_id' => $requestId]);
+
+        try {
+            $response = Http::timeout(30)->withHeaders($headers)->post($url, $payload);
+            $result = $response->json();
+
+            Log::info('VTpass Response', $result);
+
+            if (isset($result['code']) && $result['code'] == '000') {
+                Auth::user()->decrement('wallet_balance', $amount);
+                return redirect()->route('dashboard')->with('success', "Success: ₦{$amount} airtime sent to {$phone}");
+            } else {
+                $errorMsg = $result['response_description'] ?? $result['message'] ?? 'Unknown error';
+                $errorCode = $result['code'] ?? 'no_code';
+                return back()->with('error', "VTpass: {$errorMsg} | Code: {$errorCode}");
+            }
+
+        } catch (\Exception $e) {
+            Log::error('VTpass Exception', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Connection failed: ' . $e->getMessage());
+        }
+    }
+}
