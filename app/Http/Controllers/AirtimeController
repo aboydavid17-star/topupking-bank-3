@@ -63,7 +63,7 @@ class AirtimeController extends Controller
         ];
 
         // 3. UNCOMMENT NEXT LINE TO DEBUG - WILL SHOW YOU EXACTLY WHAT LARAVEL SENDS
-        dd(['url' => $url, 'env' => env('VTPASS_ENV'), 'key_len' => strlen(env('VTPASS_API_KEY'))]);
+        'dd(['url' => $url, 'env' => env('VTPASS_ENV'), 'key_len' => strlen(env('VTPASS_API_KEY'))]);
 
         Log::info('VTpass Request', ['url' => $url, 'env' => env('VTPASS_ENV'), 'request_id' => $requestId]);
 
