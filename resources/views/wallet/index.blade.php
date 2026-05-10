@@ -4,7 +4,7 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Transaction History</h2>
-        <a href="{{ route('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{{ route('wallet.index') }}" class="btn btn-primary">Back to Wallet</a>
     </div>
 
     <div class="card mb-3">
