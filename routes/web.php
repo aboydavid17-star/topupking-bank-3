@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     return view('welcome');
@@ -9,24 +10,27 @@ Route::get('/', function () {
 
 Auth::routes();
 
-// Dashboard
+// Dashboard - NOW SHOWS REAL BALANCE
 Route::get('/home', function () {
-    return view('dashboard');
+    $balance = DB::table('users')->where('id', auth()->id())->value('wallet_balance');
+    return view('dashboard', ['balance' => $balance]);
 })->middleware('auth')->name('home');
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $balance = DB::table('users')->where('id', auth()->id())->value('wallet_balance');
+    return view('dashboard', ['balance' => $balance]);
 })->middleware('auth')->name('dashboard');
 
-// Wallet routes your dashboard.blade.php is calling
+// Routes your dashboard.blade.php buttons need
 Route::get('/wallet', function () {
-    return view('dashboard'); // Just show dashboard for now
+    $balance = DB::table('users')->where('id', auth()->id())->value('wallet_balance');
+    return view('dashboard', ['balance' => $balance]);
 })->middleware('auth')->name('wallet.index');
 
 Route::get('/airtime', function () {
-    return view('dashboard'); 
+    return redirect('/dashboard');
 })->middleware('auth')->name('airtime');
 
 Route::get('/data', function () {
-    return view('dashboard');
+    return redirect('/dashboard');
 })->middleware('auth')->name('data');
