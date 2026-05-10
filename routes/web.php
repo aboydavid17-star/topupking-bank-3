@@ -10,7 +10,7 @@ Route::get('/', function () {
 
 Auth::routes();
 
-// Dashboard - NOW SHOWS REAL BALANCE
+// Dashboard - passes real balance
 Route::get('/home', function () {
     $balance = DB::table('users')->where('id', auth()->id())->value('wallet_balance');
     return view('dashboard', ['balance' => $balance]);
@@ -21,7 +21,7 @@ Route::get('/dashboard', function () {
     return view('dashboard', ['balance' => $balance]);
 })->middleware('auth')->name('dashboard');
 
-// Routes your dashboard.blade.php buttons need
+// Routes your buttons need
 Route::get('/wallet', function () {
     $balance = DB::table('users')->where('id', auth()->id())->value('wallet_balance');
     return view('dashboard', ['balance' => $balance]);
@@ -34,11 +34,11 @@ Route::get('/airtime', function () {
 Route::get('/data', function () {
     return redirect('/dashboard');
 })->middleware('auth')->name('data');
+
+// CHECK REAL BALANCE - DELETE AFTER USE
 Route::get('/check-balance', function () {
     $user = auth()->user();
     if (!$user) return 'Not logged in';
-    
     $balance = DB::table('users')->where('id', $user->id)->value('wallet_balance');
-    
-    return "USER ID: {$user->id} <br> EMAIL: {$user->email} <br> REAL BALANCE IN DB: ₦" . number_format($balance, 2);
+    return "EMAIL: {$user->email} <br> REAL DB BALANCE: ₦" . number_format($balance, 2);
 })->middleware('auth');
