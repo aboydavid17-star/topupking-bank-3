@@ -36,7 +36,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Amount (₦)</label>
-                            <input type="number" name="amount" class="form-control" min="50" max="10000" required>
+                            <input type="number" name="amount" class="form-control" min="50" max="10000" value="50" required>
                             <small>Min: ₦50 | Max: ₦10,000</small>
                         </div>
 
