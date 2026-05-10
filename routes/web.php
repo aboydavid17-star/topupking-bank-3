@@ -1,30 +1,28 @@
-<?php
-
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\WalletController;
-
-Route::get('/', function () {
-    return redirect('/wallet');
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
-    Route::get('/wallet/fund', [WalletController::class, 'showFundingForm'])->name('wallet.fund');
-    Route::post('/wallet/fund', [WalletController::class, 'fund'])->name('fund');
-    Route::get('/wallet/verify', [WalletController::class, 'verifyPayment'])->name('wallet.verify');
-    Route::get('/force-credit', [WalletController::class, 'forceCredit'])->name('wallet.force');
-});
-
-require __DIR__.'/auth.php';
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 
-Route::get('/add-wallet-column', function () {
-    if (!Schema::hasColumn('users', 'wallet_balance')) {
+Route::get('/fix-wallet-db', function () {
+    try {
+        // Check if column exists
+        if (Schema::hasColumn('users', 'wallet_balance')) {
+            return '<h1>Column already exists ✅</h1><p>Go to /force-credit now</p>';
+        }
+
+        // Add the column
         Schema::table('users', function (Blueprint $table) {
             $table->decimal('wallet_balance', 10, 2)->default(0)->after('email');
         });
-        return 'Column wallet_balance added successfully! Now delete this route.';
+
+        // Verify it was added
+        $columns = Schema::getColumnListing('users');
+        if (in_array('wallet_balance', $columns)) {
+            return '<h1>SUCCESS: wallet_balance added ✅</h1><p>Now tap /force-credit to fund ₦600</p>';
+        } else {
+            return '<h1>FAILED: Column not added ❌</h1>';
+        }
+        
+    } catch (\Exception $e) {
+        return '<h1>ERROR</h1><p>' . $e->getMessage() . '</p>';
     }
-    return 'Column already exists.';
 });
