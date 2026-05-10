@@ -4,30 +4,25 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class WalletController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $user = Auth::user();
+        $wallet = $user->wallet()->firstOrCreate(['user_id' => $user->id]);
+        $transactions = $user->transactions()->latest()->get();
         
-        $wallet = $user->wallet()->firstOrCreate(
-            ['user_id' => $user->id],
-            ['balance' => 0]
-        );
-
-        $transactions = $user->transactions()
-            ->latest()
-            ->take(10)
-            ->get();
-
-        return view('wallet.index', [
-            'wallet' => $wallet,
-            'transactions' => $transactions
-        ]);
+        return view('wallet.index', compact('wallet', 'transactions'));
     }
 
-    public function fund()
+    public function showFundForm()
     {
         return view('wallet.fund');
     }
@@ -35,15 +30,16 @@ class WalletController extends Controller
     public function initializePayment(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:100'
+            'amount' => 'required|numeric|min:1'
         ]);
 
         $user = Auth::user();
-        $amount = $request->amount * 100; // Paystack uses kobo
+        $amount = $request->amount * 100;
 
         $paymentData = [
             'email' => $user->email,
             'amount' => $amount,
+            'currency' => 'NGN',
             'callback_url' => route('wallet.verify'),
             'metadata' => [
                 'user_id' => $user->id,
@@ -51,34 +47,16 @@ class WalletController extends Controller
             ]
         ];
 
-        $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.paystack.co/transaction/initialize",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode($paymentData),
-            CURLOPT_HTTPHEADER => [
-                "authorization: Bearer " . env('PAYSTACK_SECRET_KEY'),
-                "content-type: application/json",
-                "cache-control: no-cache"
-            ],
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-        curl_close($curl);
-
-        if ($err) {
-            return back()->with('error', 'Payment initialization failed');
-        }
+        $response = Http::withToken(env('PAYSTACK_SECRET_KEY'))
+            ->post('https://api.paystack.co/transaction/initialize', $paymentData);
 
         $result = json_decode($response, true);
 
-        if ($result['status']) {
-            return redirect($result['data']['authorization_url']);
-        } else {
-            return back()->with('error', $result['message']);
+        if (!$result['status']) {
+            return back()->with('error', 'Paystack Error: ' . $result['message']);
         }
+
+        return redirect($result['data']['authorization_url']);
     }
 
     public function verifyPayment(Request $request)
@@ -86,49 +64,38 @@ class WalletController extends Controller
         $reference = $request->reference;
         
         if (!$reference) {
-            return redirect()->route('wallet.index')->with('error', 'No reference supplied');
+            return redirect('/wallet')->with('error', 'No reference supplied');
         }
 
-        $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.paystack.co/transaction/verify/" . rawurlencode($reference),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [
-                "authorization: Bearer " . env('PAYSTACK_SECRET_KEY'),
-                "cache-control: no-cache"
-            ],
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-        curl_close($curl);
-
-        if ($err) {
-            return redirect()->route('wallet.index')->with('error', 'Payment verification failed');
-        }
+        $response = Http::withToken(env('PAYSTACK_SECRET_KEY'))
+            ->get("https://api.paystack.co/transaction/verify/{$reference}");
 
         $result = json_decode($response, true);
 
         if ($result['status'] && $result['data']['status'] == 'success') {
             $user = Auth::user();
-            $amount = $result['data']['amount'] / 100; // Convert from kobo
+            $amount = $result['data']['amount'] / 100;
+            
+            $exists = $user->transactions()->where('reference', $reference)->exists();
+            
+            if (!$exists) {
+                $wallet = $user->wallet()->firstOrCreate(['user_id' => $user->id]);
+                $wallet->increment('balance', $amount);
+                
+                $user->transactions()->create([
+                    'type' => 'credit',
+                    'amount' => $amount,
+                    'description' => 'Wallet Funding via Paystack',
+                    'reference' => $reference,
+                    'status' => 'success'
+                ]);
 
-            // Credit wallet
-            $wallet = $user->wallet()->firstOrCreate(['user_id' => $user->id]);
-            $wallet->increment('balance', $amount);
-
-            // Create transaction
-            $user->transactions()->create([
-                'type' => 'credit',
-                'amount' => $amount,
-                'description' => 'Wallet Funding via Paystack',
-                'reference' => $reference,
-                'status' => 'success'
-            ]);
-
-            return redirect()->route('wallet.index')->with('success', 'Wallet funded successfully');
-        } else {
-            return redirect()->route('wallet.index')->with('error', 'Payment not successful');
+                return redirect('/wallet')->with('success', "₦{$amount} credited successfully");
+            }
+            
+            return redirect('/wallet')->with('info', 'Transaction already processed');
         }
+
+        return redirect('/wallet')->with('error', 'Payment verification failed');
     }
 }
