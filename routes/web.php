@@ -1,80 +1,34 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 use App\Http\Controllers\WalletController;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\ProfileController;
 
-Route::get('/ping', fn() => 'TOPUPKING IS ALIVE - ' . config('app.url'));
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect()->route('wallet');
-    }
-    return redirect()->route('login');
+    return redirect()->route('wallet.index');
 });
 
-Route::middleware('guest')->group(function () {
-    Route::get('/login', function () {
-        return view('auth.login');
-    })->name('login');
+Route::middleware(['auth'])->group(function () {
     
-    Route::post('/login', function (Request $request) {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
- 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->intended(route('wallet'));
-        }
- 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ]);
-    });
+    // Wallet Routes
+    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
+    Route::post('/fund', [WalletController::class, 'fund'])->name('fund');
+    Route::get('/paystack/callback', [WalletController::class, 'handleGatewayCallback'])->name('paystack.callback');
     
-    Route::get('/register', function () {
-        return view('auth.register');
-    })->name('register');
+    // Transaction Routes
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
     
-    Route::post('/register', function (Request $request) {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
- 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'balance' => 0,
-        ]);
- 
-        Auth::login($user);
-        return redirect()->route('wallet');
-    });
+    // Profile Routes - Breeze default
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware('auth')->group(function () {
-    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet');
-    Route::get('/fund', [WalletController::class, 'showFundForm'])->name('wallet.fund');
-    Route::post('/fund', [WalletController::class, 'fund'])->name('wallet.fund.store');
-    Route::post('/pay', [WalletController::class, 'redirectToGateway'])->name('pay');
-    Route::get('/pay/callback', [WalletController::class, 'handleGatewayCallback'])->name('pay.callback');
-    Route::get('/buy-data', [WalletController::class, 'showDataForm'])->name('wallet.data');
-    Route::post('/buy-data', [WalletController::class, 'buyData'])->name('wallet.data.store');
-    Route::get('/buy-airtime', [WalletController::class, 'showAirtimeForm'])->name('wallet.airtime');
-    Route::post('/buy-airtime', [WalletController::class, 'buyAirtime'])->name('wallet.airtime.store');
-    
-    Route::post('/logout', function (Request $request) {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/login');
-    })->name('logout');
-});
+require __DIR__.'/auth.php';
