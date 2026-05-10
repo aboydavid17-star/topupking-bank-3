@@ -3,87 +3,69 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Transaction History</h2>
-        <a href="{{ route('wallet.index') }}" class="btn btn-primary">Back to Wallet</a>
+        <h2>My Wallet</h2>
+        <a href="{{ route('wallet.fund') }}" class="btn btn-primary">Fund Wallet</a>
     </div>
 
-    <div class="card mb-3">
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
+    <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" class="row g-2">
-                <div class="col-md-3">
-                    <select name="type" class="form-select">
-                        <option value="">All Types</option>
-                        <option value="credit" {{ request('type') == 'credit' ? 'selected' : '' }}>Credit</option>
-                        <option value="debit" {{ request('type') == 'debit' ? 'selected' : '' }}>Debit</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="status" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="successful" {{ request('status') == 'successful' ? 'selected' : '' }}>Successful</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary w-100">Filter</button>
-                </div>
-            </form>
+            <h5 class="card-title">Wallet Balance</h5>
+            <h3 class="text-success">₦{{ number_format($wallet->balance, 2) }}</h3>
         </div>
     </div>
 
     <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Reference</th>
-                        <th>Description</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Balance</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($transactions as $txn)
-                    <tr>
-                        <td>{{ $txn->created_at->format('M d, Y h:i A') }}</td>
-                        <td><code>{{ $txn->reference }}</code></td>
-                        <td>{{ $txn->description ?? ucfirst($txn->purpose) }}</td>
-                        <td>
-                            @if($txn->type == 'credit')
-                                <span class="badge bg-success">Credit</span>
-                            @else
-                                <span class="badge bg-danger">Debit</span>
-                            @endif
-                        </td>
-                        <td class="fw-bold">₦{{ number_format($txn->amount, 2) }}</td>
-                        <td>₦{{ number_format($txn->balance_after, 2) }}</td>
-                        <td>
-                            @if($txn->status == 'successful')
-                                <span class="badge bg-success">Successful</span>
-                            @elseif($txn->status == 'pending')
-                                <span class="badge bg-warning">Pending</span>
-                            @else
-                                <span class="badge bg-danger">Failed</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-4">No transactions found</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+        <div class="card-header">
+            <h5>Transaction History</h5>
         </div>
-        @if($transactions->hasPages())
-        <div class="card-footer">
-            {{ $transactions->links() }}
+        <div class="card-body">
+            @if($transactions->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Reference</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($transactions as $transaction)
+                            <tr>
+                                <td>{{ $transaction->created_at->format('d M Y, h:i A') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $transaction->type == 'credit' ? 'success' : 'danger' }}">
+                                        {{ ucfirst($transaction->type) }}
+                                    </span>
+                                </td>
+                                <td>₦{{ number_format($transaction->amount, 2) }}</td>
+                                <td>{{ $transaction->description }}</td>
+                                <td>{{ $transaction->reference }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $transaction->status == 'success' ? 'success' : 'warning' }}">
+                                        {{ ucfirst($transaction->status) }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-muted">No transactions yet. Fund your wallet to get started.</p>
+            @endif
         </div>
-        @endif
     </div>
 </div>
 @endsection
