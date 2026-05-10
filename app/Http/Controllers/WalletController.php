@@ -3,60 +3,64 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use App\Models\Transaction;
+use Illuminate\Support\Str;
 
 class WalletController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function index()
     {
-        $user = Auth::user();
-        $wallet = $user->wallet()->firstOrCreate(['user_id' => $user->id]);
-        $transactions = $user->transactions()->latest()->get();
-        
-        return view('wallet.index', compact('wallet', 'transactions'));
+        $user = auth()->user();
+        $transactions = Transaction::where('user_id', $user->id)
+            ->latest()
+            ->take(10)
+            ->get();
+            
+        return view('wallet.index', [
+            'balance' => $user->wallet_balance,
+            'transactions' => $transactions
+        ]);
     }
 
-    public function showFundForm()
+    public function showFundingForm()
     {
         return view('wallet.fund');
     }
 
-    public function initializePayment(Request $request)
+    public function fund(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:1'
+            'amount' => 'required|numeric|min:100'
         ]);
 
-        $user = Auth::user();
-        $amount = $request->amount * 100;
+        $amount = $request->amount * 100; // Convert to kobo
+        $reference = 'TOPUP_' . Str::random(10) . '_' . time();
+        
+        // Save pending transaction
+        Transaction::create([
+            'user_id' => auth()->id(),
+            'type' => 'credit',
+            'amount' => $request->amount,
+            'description' => 'Wallet Funding via Paystack',
+            'status' => 'pending',
+            'reference' => $reference,
+        ]);
 
-        $paymentData = [
-            'email' => $user->email,
-            'amount' => $amount,
-            'currency' => 'NGN',
-            'callback_url' => route('wallet.verify'),
-            'metadata' => [
-                'user_id' => $user->id,
-                'type' => 'wallet_funding'
-            ]
-        ];
+        // Initialize Paystack payment
+        $response = Http::withToken(config('services.paystack.secret_key'))
+            ->post('https://api.paystack.co/transaction/initialize', [
+                'email' => auth()->user()->email,
+                'amount' => $amount,
+                'reference' => $reference,
+                'callback_url' => route('wallet.verify'),
+            ]);
 
-        $response = Http::withToken(env('PAYSTACK_SECRET_KEY'))
-            ->post('https://api.paystack.co/transaction/initialize', $paymentData);
-
-        $result = json_decode($response, true);
-
-        if (!$result['status']) {
-            return back()->with('error', 'Paystack Error: ' . $result['message']);
+        if ($response->successful() && $response['status']) {
+            return redirect($response['data']['authorization_url']);
         }
 
-        return redirect($result['data']['authorization_url']);
+        return back()->with('error', 'Unable to initialize payment. Try again.');
     }
 
     public function verifyPayment(Request $request)
@@ -64,38 +68,51 @@ class WalletController extends Controller
         $reference = $request->reference;
         
         if (!$reference) {
-            return redirect('/wallet')->with('error', 'No reference supplied');
+            return redirect()->route('wallet.index')->with('error', 'No reference supplied');
         }
 
-        $response = Http::withToken(env('PAYSTACK_SECRET_KEY'))
+        $response = Http::withToken(config('services.paystack.secret_key'))
             ->get("https://api.paystack.co/transaction/verify/{$reference}");
 
-        $result = json_decode($response, true);
+        $transaction = Transaction::where('reference', $reference)->first();
 
-        if ($result['status'] && $result['data']['status'] == 'success') {
-            $user = Auth::user();
-            $amount = $result['data']['amount'] / 100;
-            
-            $exists = $user->transactions()->where('reference', $reference)->exists();
-            
-            if (!$exists) {
-                $wallet = $user->wallet()->firstOrCreate(['user_id' => $user->id]);
-                $wallet->increment('balance', $amount);
+        if ($response->successful() && $response['data']['status'] === 'success') {
+            if ($transaction && $transaction->status === 'pending') {
+                $user = $transaction->user;
+                $user->wallet_balance += $transaction->amount;
+                $user->save();
+
+                $transaction->update(['status' => 'success']);
                 
-                $user->transactions()->create([
-                    'type' => 'credit',
-                    'amount' => $amount,
-                    'description' => 'Wallet Funding via Paystack',
-                    'reference' => $reference,
-                    'status' => 'success'
-                ]);
-
-                return redirect('/wallet')->with('success', "₦{$amount} credited successfully");
+                return redirect()->route('wallet.index')->with('success', 'Wallet funded successfully!');
             }
-            
-            return redirect('/wallet')->with('info', 'Transaction already processed');
         }
 
-        return redirect('/wallet')->with('error', 'Payment verification failed');
+        if ($transaction) {
+            $transaction->update(['status' => 'failed']);
+        }
+
+        return redirect()->route('wallet.index')->with('error', 'Payment verification failed');
+    }
+
+    public function forceCredit()
+    {
+        $user = auth()->user();
+        
+        // Credit ₦600
+        $user->wallet_balance += 600;
+        $user->save();
+        
+        // Log transaction
+        Transaction::create([
+            'user_id' => $user->id,
+            'type' => 'credit',
+            'amount' => 600,
+            'description' => 'Manual Credit - Paystack Test',
+            'status' => 'success',
+            'reference' => 'TEST_' . time(),
+        ]);
+        
+        return redirect()->route('wallet.index')->with('success', 'Wallet credited with ₦600');
     }
 }
