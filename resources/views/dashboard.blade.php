@@ -1,38 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard - TopupKing</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopupKing Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f3f4f6; }
-        .header { background: #2563eb; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .balance { font-size: 32px; font-weight: bold; color: #16a34a; margin: 15px 0; }
-        .btn { background: #2563eb; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 5px 0; width: 100%; text-align: center; border: none; cursor: pointer; }
-        .btn-red { background: #dc2626; }
-        .btn-green { background: #16a34a; }
-        .btn-secondary { background: #6b7280; }
+        body { background-color: #f8f9fa; }
+        .dashboard-card { margin-top: 50px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>TopupKing Dashboard</h2>
-        <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-            @csrf
-            <button type="submit" class="btn btn-red" style="width: auto; float: right;">Logout</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h3>Welcome, {{ Auth::user()->name }}</h3>
-        <p>Email: {{ Auth::user()->email }}</p>
-        
-        <h4>Wallet Balance</h4>
-        <div class="balance">₦{{ number_format(Auth::user()->wallet->balance ?? 0, 2) }}</div>
-        
-        <a href="{{ route('wallet.index') }}" class="btn btn-green">Fund Wallet</a>
-        <a href="/airtime" class="btn btn-secondary">Buy Airtime</a>
-        <a href="/data" class="btn btn-secondary">Buy Data</a>
+    <div class="container">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <h3>TopupKing Dashboard</h3>
+                <form action="{{ route('logout') }}" method="POST" class="float-end">
+                    @csrf
+                    <button type="submit" class="btn btn-danger btn-sm">Logout</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Welcome, {{ Auth::user()->name }}</h5>
+                <p class="card-text">Email: {{ Auth::user()->email }}</p>
+                
+                <hr>
+                
+                <h6 class="fw-bold">Wallet Balance</h6>
+                <h1 class="text-success mb-4">₦{{ number_format($balance ?? 0, 2) }}</h1>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ route('wallet.index') }}" class="btn btn-success btn-lg">Fund Wallet</a>
+                    <a href="{{ route('airtime') }}" class="btn btn-secondary btn-lg">Buy Airtime</a>
+                    <a href="{{ route('data') }}" class="btn btn-secondary btn-lg">Buy Data</a>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
