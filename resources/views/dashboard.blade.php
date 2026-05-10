@@ -26,11 +26,18 @@
                 
                 <hr>
                 
+                @if(session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+                @if(session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
+                @endif
+                
                 <h6 class="fw-bold">Wallet Balance</h6>
                 <h1 class="text-success mb-4">₦{{ number_format($balance ?? 0, 2) }}</h1>
                 
                 <div class="d-grid gap-2">
-                    <a href="{{ route('wallet.index') }}" class="btn btn-success btn-lg">Fund Wallet</a>
+                    <a href="{{ route('fund.wallet') }}" class="btn btn-success btn-lg">Fund Wallet</a>
                     <a href="{{ route('airtime') }}" class="btn btn-secondary btn-lg">Buy Airtime</a>
                     <a href="{{ route('data') }}" class="btn btn-secondary btn-lg">Buy Data</a>
                 </div>
