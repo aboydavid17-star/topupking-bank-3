@@ -10,7 +10,6 @@ Route::get('/', function () {
 
 Auth::routes();
 
-// Dashboard - passes real balance
 Route::get('/home', function () {
     $balance = DB::table('users')->where('id', auth()->id())->value('wallet_balance');
     return view('dashboard', ['balance' => $balance]);
@@ -21,7 +20,6 @@ Route::get('/dashboard', function () {
     return view('dashboard', ['balance' => $balance]);
 })->middleware('auth')->name('dashboard');
 
-// Routes your buttons need
 Route::get('/wallet', function () {
     $balance = DB::table('users')->where('id', auth()->id())->value('wallet_balance');
     return view('dashboard', ['balance' => $balance]);
@@ -35,7 +33,6 @@ Route::get('/data', function () {
     return redirect('/dashboard');
 })->middleware('auth')->name('data');
 
-// CHECK REAL BALANCE - DELETE AFTER USE
 Route::get('/check-balance', function () {
     $user = auth()->user();
     if (!$user) return 'Not logged in';
