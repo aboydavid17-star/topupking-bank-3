@@ -143,3 +143,6 @@ Route::post('/buy-airtime', function () {
 Route::get('/data', function () {
     return redirect('/dashboard');
 })->middleware('auth')->name('data');
+Route::get('/test-deploy', function() {
+    return "DEPLOY IS WORKING - " . date('Y-m-d H:i:s');
+});
