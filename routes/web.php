@@ -3,10 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-Route::get('/fix-network-now', function () {
-    DB::statement("ALTER TABLE transactions ALTER COLUMN network DROP NOT NULL");
-    return "<h1 style='color:green;font-family:Arial;padding:50px;text-align:center;'>DONE: network column fixed. Now delete this route.</h1>";
-});
 session_start();
 
 function authCheck() {
