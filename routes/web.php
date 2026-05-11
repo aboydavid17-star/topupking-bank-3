@@ -11,7 +11,13 @@ function authCheck() {
     }
     return DB::table('users')->find($_SESSION['user_id']);
 }
-
+Route::get('/fix-all-now', function () {
+    DB::statement("ALTER TABLE transactions ALTER COLUMN network DROP NOT NULL");
+    DB::statement("ALTER TABLE transactions ALTER COLUMN phone_number DROP NOT NULL"); 
+    DB::statement("ALTER TABLE transactions ALTER COLUMN plan_name DROP NOT NULL");
+    DB::statement("ALTER TABLE transactions ALTER COLUMN data_amount DROP NOT NULL");
+    return "<h1 style='color:green;font-family:Arial;padding:50px;text-align:center;'>DONE: All transaction columns fixed. GO TO BED BOSS 👑</h1>";
+});
 Route::get('/', function () {
     return "<!DOCTYPE html><html><head><title>TopupKing</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head><body style=\"font-family:Arial;text-align:center;padding:50px;background:#f4f4f4;\"><h1>Welcome to TopupKing</h1><p>Fast & Reliable VTU Services</p><a href=\"/register\" style=\"padding:15px 30px;background:#007bff;color:white;text-decoration:none;border-radius:5px;margin:10px;display:inline-block;\">Sign Up</a><a href=\"/login\" style=\"padding:15px 30px;background:#28a745;color:white;text-decoration:none;border-radius:5px;margin:10px;display:inline-block;\">Login</a></body></html>";
 });
