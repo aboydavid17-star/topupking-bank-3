@@ -62,3 +62,6 @@ Route::post('/buy-airtime', function () {
     return redirect('/dashboard')->with('success', '₦' . $amount . ' ' . strtoupper($network) . ' airtime sent to ' . $phone);
     
 })->middleware('auth')->name('airtime.buy');
+Route::get('/test123', function () {
+    return 'BOSS IT WORKS';
+});
