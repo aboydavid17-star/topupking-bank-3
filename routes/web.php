@@ -265,3 +265,10 @@ Route::post('/buy-airtime', function () {
 
     return redirect('/buy-airtime')->with('success', 'SUCCESS! ₦' . $amount . ' ' . strtoupper($network) . ' sent to ' . $phone);
 });
+Route::get('/create-tables-now', function () {
+    DB::statement("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255) UNIQUE NOT NULL, phone VARCHAR(11) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, wallet_balance DECIMAL(10,2) DEFAULT 0.00, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+    
+    DB::statement("CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INT NOT NULL, type VARCHAR(50) NOT NULL, amount DECIMAL(10,2) NOT NULL, status VARCHAR(20) DEFAULT 'pending', reference VARCHAR(255) UNIQUE, description TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+    
+    return "SUCCESS BOSS! Users and Transactions tables created. Now delete this route.";
+});
