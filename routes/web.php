@@ -266,4 +266,4 @@ Route::post('/buy-airtime', function () {
     ]);
 
     return redirect('/buy-airtime')->with('success', 'SUCCESS! ₦' . $amount . ' ' . strtoupper($network) . ' sent to ' . $phone);
-    ));
+});   
