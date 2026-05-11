@@ -4,16 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-session_start();
-
-Route::get('/fix-db-transactions', function () {
-    DB::statement("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS description VARCHAR(255) NULL");
-    DB::statement("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS type VARCHAR(50) NULL");
-    DB::statement("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending'");
-    DB::statement("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS reference VARCHAR(255) NULL");
-    DB::statement("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS amount DECIMAL(10,2) DEFAULT 0");
-    return "<h1 style=\"color:green;\">SUCCESS: Transactions table fixed!</h1>";
-});
+session_start():
 
 function authCheck() {
     if (!isset($_SESSION['user_id'])) {
