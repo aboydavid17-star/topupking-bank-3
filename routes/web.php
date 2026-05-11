@@ -4,7 +4,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 session_start();
-
+Route::get('/fix-phone-now', function () {
+    DB::statement("ALTER TABLE transactions ALTER COLUMN phone_number DROP NOT NULL");
+    DB::statement("ALTER TABLE transactions ALTER COLUMN network DROP NOT NULL");
+    return "<h1 style='color:green;font-family:Arial;padding:50px;text-align:center;'>DONE: phone_number + network fixed. Fund Wallet will work now.</h1>";
+});
 function authCheck() {
     if (!isset($_SESSION['user_id'])) {
         header('Location: /login');
