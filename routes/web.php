@@ -65,3 +65,10 @@ Route::post('/buy-airtime', function () {
 Route::get('/test123', function () {
     return 'BOSS IT WORKS';
 });
+Route::get('/buy-airtime', function () {
+    return '<h1>Buy Airtime Works!</h1>';
+})->name('airtime.form');
+
+Route::post('/buy-airtime', function () {
+    // your code 
+})->name('airtime.buy');
