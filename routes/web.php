@@ -36,7 +36,7 @@ Route::get('/register', function () {
 <div style="max-width:400px;margin:30px auto;background:white;padding:30px;border-radius:15px;">
 <h2 style="text-align:center;">Create Account</h2>{$error}
 <form method="POST" action="/register">
-<input type="hidden" name="_token" value="csrf_token()">
+<input type="hidden" name="_token" value=<?php echo csrf_token(); ?>
 <input name="name" required placeholder="Full Name" style="padding:12px;width:100%;margin-bottom:15px;border:2px solid #ddd;border-radius:8px;box-sizing:border-box;">
 <input name="email" type="email" required placeholder="Email" style="padding:12px;width:100%;margin-bottom:15px;border:2px solid #ddd;border-radius:8px;box-sizing:border-box;">
 <input name="phone" required placeholder="Phone 08012345678" maxlength="11" style="padding:12px;width:100%;margin-bottom:15px;border:2px solid #ddd;border-radius:8px;box-sizing:border-box;">
