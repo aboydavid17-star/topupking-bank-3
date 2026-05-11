@@ -72,7 +72,8 @@ Route::get('/login', function () {
 <div style="max-width:400px;margin:30px auto;background:white;padding:30px;border-radius:15px;">
 <h2 style="text-align:center;">Login</h2>{$error}
 <form method="POST" action="/login">
-<input type="hidden" name="_token" value="csrf_token()">
+<input type="hidden" name="_token" value=<?php echo csrf_token(); ?>
+
 <input name="email" type="email" required placeholder="Email" style="padding:12px;width:100%;margin-bottom:15px;border:2px solid #ddd;border-radius:8px;box-sizing:border-box;">
 <input name="password" type="password" required placeholder="Password" style="padding:12px;width:100%;margin-bottom:20px;border:2px solid #ddd;border-radius:8px;box-sizing:border-box;">
 <button style="padding:15px;width:100%;background:#007bff;color:white;border:none;border-radius:8px;font-size:16px;">Login</button>
