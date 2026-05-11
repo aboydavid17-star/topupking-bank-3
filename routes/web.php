@@ -267,7 +267,7 @@ Route::post('/buy-airtime', function () {
 
     return redirect('/buy-airtime')->with('success', 'SUCCESS! ₦' . $amount . ' ' . strtoupper($network) . ' sent to ' . $phone);
 });
-// ==================== USER AUTH SYSTEM ====================
+
 
 // REGISTER PAGE
 Route::get('/register', function () {
