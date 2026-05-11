@@ -6,15 +6,6 @@ use Illuminate\Support\Facades\Hash;
 
 session_start();
 
-// TEMPORARY ROUTE TO ADD PHONE COLUMN - DELETE AFTER USE
-Route::get('/fix-db-phone', function () {
-    try {
-        DB::statement('ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(255) NULL');
-        return '<h1 style="color:green;">SUCCESS: Phone column added!</h1><p>Now DELETE the /fix-db-phone route from web.php and redeploy.</p>';
-    } catch (Exception $e) {
-        return '<h1 style="color:red;">Error:</h1> ' . $e->getMessage();
-    }
-});
 
 function authCheck() {
     if (!isset($_SESSION['user_id'])) {
